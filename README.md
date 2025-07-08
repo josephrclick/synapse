@@ -1,7 +1,7 @@
 # Synapse: Your Brain, Upgraded.
 
 <div align="center">
-  <img src="frontend/capture-v3/public/synapse-logo.png" alt="Synapse Logo" width="400" />
+  <img src="frontend/capture-v3/public/synapse-logo-2.png" alt="Synapse Logo" width="400" />
   
  *Your brain is full. Let's fix that.*
 </div>
@@ -49,7 +49,13 @@ Feeling brave? Want to run this glorious beast?
 
 ### 🚀 The One-Command Wonder
 
-Seriously, just one command.
+First, copy the environment configuration:
+
+```bash
+cp .env.example .env
+```
+
+Then, just one command to rule them all:
 
 ```bash
 make run-all
@@ -72,7 +78,7 @@ Everything important is in the root `.env` file. You'll probably want to create 
 ### The Roadmap
 
   * [ ] Make it even smarter.
-  * [ ] Add voice input so you can talk to it.
+  * [ ] Add voice input so you can talk to it. Deepgram for the win!
   * [ ] Probably add more buttons.
 
 -----
