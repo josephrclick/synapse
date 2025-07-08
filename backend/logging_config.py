@@ -14,7 +14,7 @@ class JSONFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Format log record as JSON."""
         # Import here to avoid circular imports
-        from .middleware import get_request_id
+        from middleware import get_request_id
         
         log_data: Dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat(),

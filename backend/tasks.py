@@ -9,15 +9,15 @@ dedicated task queues (like Celery or Dramatiq) in the future.
 import logging
 from haystack import Document as HaystackDocument
 
-from . import database
-from .pipelines import get_indexing_pipeline
-from .repositories import DocumentRepository
-from .config import settings
+import database
+from pipelines import get_indexing_pipeline
+from repositories import DocumentRepository
+from config import settings
 
 # Import async modules when feature flag is enabled
 if settings.use_async_db:
-    from . import database_async
-    from .repositories_async import DocumentRepositoryAsync
+    import database_async
+    from repositories_async import DocumentRepositoryAsync
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)

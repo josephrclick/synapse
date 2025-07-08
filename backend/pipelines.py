@@ -18,8 +18,8 @@ from haystack_integrations.components.retrievers.chroma import ChromaEmbeddingRe
 from haystack_integrations.components.embedders.ollama import OllamaDocumentEmbedder, OllamaTextEmbedder
 from haystack_integrations.components.generators.ollama import OllamaGenerator
 
-from .config import settings
-from .retry_utils import ollama_retry, chromadb_retry
+from config import settings
+from retry_utils import ollama_retry, chromadb_retry
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ Uses FastAPI dependency injection pattern.
 from fastapi import HTTPException, Security, status
 from fastapi.security import APIKeyHeader
 
-from .config import settings
+from config import settings
 
 # Define the API key header name
 API_KEY_NAME = "X-API-KEY"

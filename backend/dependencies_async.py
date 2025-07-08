@@ -7,8 +7,8 @@ injection system when async database mode is enabled.
 from typing import AsyncGenerator
 from fastapi import Depends
 
-from .database_async import database
-from .repositories_async import DocumentRepositoryAsync
+from database_async import database
+from repositories_async import DocumentRepositoryAsync
 
 
 async def get_document_repository_async() -> AsyncGenerator[DocumentRepositoryAsync, None]:

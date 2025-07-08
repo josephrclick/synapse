@@ -6,19 +6,20 @@ import logging
 import time
 import asyncio
 
-from . import database, schemas
-from .dependencies import get_document_repository, get_repository
-from .repositories import DocumentRepository
-from .config import settings
-from .logging_config import setup_logging
-from .auth import get_api_key
-from .pipelines import get_indexing_pipeline, get_querying_pipeline
-from .middleware import RequestIDMiddleware
-from .tasks import process_document_background, retry_failed_documents_task
+import database
+import schemas
+from dependencies import get_document_repository, get_repository
+from repositories import DocumentRepository
+from config import settings
+from logging_config import setup_logging
+from auth import get_api_key
+from pipelines import get_indexing_pipeline, get_querying_pipeline
+from middleware import RequestIDMiddleware
+from tasks import process_document_background, retry_failed_documents_task
 
 # Import async database module when feature flag is enabled
 if settings.use_async_db:
-    from . import database_async
+    import database_async
 
 # Configure logging
 setup_logging(settings.log_level)
@@ -121,7 +122,7 @@ async def health_check():
     try:
         if settings.use_async_db:
             # Async database check
-            from . import database_async
+            import database_async
             result = await database_async.database.fetch_one("SELECT COUNT(*) as count FROM documents")
             doc_count = result["count"] if result else 0
         else:

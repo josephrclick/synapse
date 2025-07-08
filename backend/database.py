@@ -4,7 +4,7 @@ from typing import Generator
 import logging
 from pathlib import Path
 
-from .config import settings
+from config import settings
 
 logger = logging.getLogger(__name__)
 

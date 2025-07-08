@@ -8,19 +8,19 @@ import sqlite3
 from typing import Union, TYPE_CHECKING
 from fastapi import Depends
 
-from .database import get_db, get_db_connection
-from .repositories import DocumentRepository
-from .config import settings
+from database import get_db, get_db_connection
+from repositories import DocumentRepository
+from config import settings
 
 # Type checking imports
 if TYPE_CHECKING:
-    from .repositories_async import DocumentRepositoryAsync
+    from repositories_async import DocumentRepositoryAsync
 
 # Import async dependencies when feature flag is enabled
 if settings.use_async_db:
-    from .database_async import database
-    from .repositories_async import DocumentRepositoryAsync
-    from .dependencies_async import get_document_repository_async
+    from database_async import database
+    from repositories_async import DocumentRepositoryAsync
+    from dependencies_async import get_document_repository_async
 
 
 # For backward compatibility and gradual migration

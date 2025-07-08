@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum
 
 try:
-    from .config import settings
+    from config import settings
 except ImportError:
     from config import settings
 
