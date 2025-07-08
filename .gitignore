@@ -1,0 +1,15 @@
+backend/.venv/
+backend/__pycache__/
+__pycache__/
+node_modules/
+.env
+.archive/
+venv/
+.cursorrules
+jupyter-notebooks/
+.vscode/
+.pytest_cache/
+.cursor/
+.claude/
+docs/reference/private/
+capture.*

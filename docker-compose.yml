@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "${API_PORT:-8101}:${API_CONTAINER_PORT:-8000}"
+    volumes:
+      - ./backend:/app
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - chromadb
+    networks:
+      - capture-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${API_CONTAINER_PORT:-8000}/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  chromadb:
+    image: chromadb/chroma:latest
+    ports:
+      - "${CHROMA_GATEWAY_PORT:-8102}:${CHROMA_CONTAINER_PORT:-8000}"
+    env_file:
+      - .env
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ALLOW_RESET=TRUE
+    networks:
+      - capture-network
+    restart: unless-stopped
+
+volumes:
+  chroma_data:
+
+networks:
+  capture-network:
+    driver: bridge
