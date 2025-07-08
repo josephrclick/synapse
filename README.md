@@ -55,6 +55,12 @@ First, copy the environment configuration:
 cp .env.example .env
 ```
 
+Install frontend dependencies:
+
+```bash
+cd frontend/capture-v3 && npm install && cd ../..
+```
+
 Then, just one command to rule them all:
 
 ```bash
