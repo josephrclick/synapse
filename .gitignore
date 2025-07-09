@@ -4,10 +4,12 @@ __pycache__/
 node_modules/
 # Environment files
 .env
-.env.
+.env.*
 !.env.example
+!.env.*.example
 *.env
 frontend/**/.env.local
+!frontend/**/.env.local.example
 .archive/
 venv/
 .cursorrules
