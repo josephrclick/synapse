@@ -122,7 +122,7 @@ LOG_LEVEL=INFO
 INTERNAL_API_KEY=$INTERNAL_API_KEY
 
 # Database
-DATABASE_URL=sqlite:///capture.db
+DATABASE_URL=sqlite:///synapse.db
 
 # Haystack/Ollama Configuration
 OLLAMA_BASE_URL=http://localhost:11434
