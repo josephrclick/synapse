@@ -1,7 +1,7 @@
 # ========================================================================
-# Capture-v3 Makefile
+# Synapse Makefile
 # ========================================================================
-# A comprehensive build system for the Capture-v3 knowledge management system
+# A comprehensive build system for the Synapse knowledge management system
 # 
 # Features:
 # - Cross-platform compatibility (Linux/macOS)
@@ -80,7 +80,7 @@ getting-started:  ## Show getting started guide
 	@echo "For all commands: $(YELLOW)make help$(NC)"
 
 init:  ## First time setup for fresh clone (creates configs and installs deps)
-	@echo "$(YELLOW)🚀 Initializing Capture-v3 from fresh clone...$(NC)"
+	@echo "$(YELLOW)🚀 Initializing Synapse from fresh clone...$(NC)"
 	@echo ""
 	@echo "$(YELLOW)Step 0: Checking requirements...$(NC)"
 	@$(MAKE) check-requirements || { echo "$(RED)Please install missing requirements first$(NC)"; exit 1; }
