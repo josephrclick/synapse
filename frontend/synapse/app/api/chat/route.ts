@@ -4,6 +4,9 @@ import { type NextRequest } from 'next/server';
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8101';
 const API_KEY = process.env.BACKEND_API_KEY || '';
 
+console.log('Backend URL:', BACKEND_URL);
+console.log('API Key configured:', API_KEY ? 'Yes' : 'No');
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -20,7 +23,17 @@ export async function POST(request: NextRequest) {
 
     // Forward the request and return the response directly.
     // This is a simple, effective proxy that doesn't need streaming logic for the MVP.
-    return await fetch(proxyRequest);
+    const backendResponse = await fetch(proxyRequest);
+    
+    // Log the response status for debugging
+    console.log('Backend response status:', backendResponse.status);
+    
+    if (!backendResponse.ok) {
+      const responseText = await backendResponse.text();
+      console.error('Backend error response:', responseText);
+    }
+    
+    return backendResponse;
 
   } catch (error) {
     console.error('API Proxy Error:', error);
