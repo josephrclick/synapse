@@ -36,7 +36,9 @@ async function submitDocument(formData: FormData): Promise<{ success: boolean; m
 
   try {
     // Make API request
-    const response = await fetch(`${process.env.BACKEND_URL}/api/documents`, {
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:8101';
+    console.log('Backend URL:', backendUrl);
+    const response = await fetch(`${backendUrl}/api/documents`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

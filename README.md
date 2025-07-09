@@ -49,22 +49,25 @@ Feeling brave? Want to run this glorious beast?
 
 ### 🚀 The One-Command Wonder
 
-First, copy the environment configuration:
-
 ```bash
-cp .env.example .env
-```
-
-Install frontend dependencies:
-
-```bash
-cd frontend/capture-v3 && npm install && cd ../..
-```
-
-Then, just one command to rule them all:
-
-```bash
+git clone https://github.com/yourusername/capture-v3.git
+cd capture-v3
 make run-all
+```
+
+That's it. Seriously. The Makefile handles everything:
+- ✅ Creates `.env` files from examples
+- ✅ Installs all dependencies (Python & Node.js)
+- ✅ Builds and starts Docker containers
+- ✅ Checks if Ollama is running
+- ✅ Launches the frontend
+
+First time? Use this instead:
+```bash
+git clone https://github.com/yourusername/capture-v3.git
+cd capture-v3
+make init        # Complete setup wizard
+make run-all     # Start everything
 ```
 
 Wait for the Docker containers to spin up and the matrix to load.
