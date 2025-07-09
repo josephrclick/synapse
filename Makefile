@@ -36,11 +36,11 @@ else
 endif
 
 # Path definitions to avoid duplication
-FRONTEND_DIR := frontend/synapse
-BACKEND_DIR := backend
+FRONTEND_DIR ?= frontend/synapse
+BACKEND_DIR ?= backend
 
-# Load environment variables
-include .env
+# Load environment variables (if exists)
+-include .env
 export
 
 # Color definitions
@@ -92,7 +92,7 @@ init:  ## First time setup for fresh clone (creates configs and installs deps)
 	@$(MAKE) setup
 	@echo ""
 	@echo "$(YELLOW)3/5: Installing frontend dependencies...$(NC)"
-	@cd frontend/synapse && npm install
+	@cd $(FRONTEND_DIR) && npm install
 	@echo ""
 	@echo "$(YELLOW)4/5: Checking Docker setup...$(NC)"
 	@$(MAKE) validate-setup
@@ -433,7 +433,7 @@ dev-setup:  ## Complete development environment setup
 	@$(MAKE) setup
 	@echo ""
 	@echo "$(YELLOW)Installing frontend dependencies...$(NC)"
-	@cd frontend/synapse && npm install
+	@cd $(FRONTEND_DIR) && npm install
 	@echo ""
 	@echo "$(GREEN)✅ Development environment ready!$(NC)"
 	@echo "Run 'make run-all' to start all services"
@@ -445,7 +445,7 @@ test-all:  ## Run all tests (backend + frontend)
 	@echo "Running backend tests..."
 	cd backend && ./run_tests.sh
 	@echo "Running frontend linting..."
-	cd frontend/synapse && npm run lint
+	cd $(FRONTEND_DIR) && npm run lint
 
 lint:  ## Run code linting
 	./venv/bin/ruff check backend/
