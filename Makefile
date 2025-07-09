@@ -855,6 +855,10 @@ clean:  ## Clean cache and temporary files
 	rm -f .ollama.pid ollama.log .frontend.pid frontend.log venv/.deps-installed
 	@echo -e "$(GREEN)✅ Cleaned temporary files$(NC)"
 
+reset-chromadb:  ## Reset ChromaDB by cleaning volumes and rebuilding (fixes startup issues)
+	@echo -e "$(YELLOW)🔧 Resetting ChromaDB...$(NC)"
+	@./fix-chromadb-startup.sh
+
 clean-docker:  ## Remove Docker images and volumes (CAUTION: deletes data)
 	@echo -e "$(RED)WARNING: This will delete all data!$(NC)"
 	@echo -e "Press Ctrl+C to cancel, or wait 5 seconds to continue..."

@@ -123,6 +123,17 @@ API_PORT=8101
 CHROMA_GATEWAY_PORT=8102
 ```
 
+### 🚨 Production Settings
+
+When deploying to production, ensure these critical settings:
+
+```bash
+# In docker-compose.yml or production .env
+CHROMADB_ALLOW_RESET=FALSE  # CRITICAL: Prevents accidental data loss
+```
+
+**Important:** The default development setting allows database resets. Always set `CHROMADB_ALLOW_RESET=FALSE` in production environments to protect your data.
+
 ### The Roadmap
 
   * [x] ~~Make it work~~ ✅

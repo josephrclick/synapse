@@ -38,7 +38,7 @@ services:
           memory: 512M
 
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.5.23
     profiles:
       - ""  # Default profile (always active)
       - development
