@@ -54,7 +54,7 @@ NC := \033[0m # No Color
         validate-setup health-check docker-shell pull-models init fresh-start wait-for-backend wait-for-chromadb \
         check-requirements logs-backend logs-chromadb logs-ollama backup-data restore-data run-frontend-background stop-frontend \
         run-all-detached dev getting-started ensure-env-files ensure-backend-env ensure-frontend-env docs \
-        run-debug run-prod build-with-cache security-check
+        run-debug run-prod build-with-cache security-check coffee
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -854,3 +854,18 @@ clean-docker:  ## Remove Docker images and volumes (CAUTION: deletes data)
 	@sleep 5
 	docker compose down -v --rmi all
 	@echo "$(GREEN)✅ Docker cleanup complete$(NC)"
+
+coffee:  ## Essential developer fuel ☕
+	@echo "    ( ("
+	@echo "     ) )"
+	@echo "  ........."
+	@echo "  |       |]"
+	@echo "  \       /"
+	@echo "   \`-----'"
+	@echo ""
+	@echo "☕ Brewing virtual coffee..."
+	@sleep 2
+	@echo "✅ Coffee ready! Now get back to coding!"
+	@echo ""
+	@echo "Fun fact: This codebase was built on approximately 127 cups of coffee."
+	@echo "Your contribution will increase this counter."
