@@ -27,13 +27,30 @@ export async function POST(request: NextRequest) {
     
     // Log the response status for debugging
     console.log('Backend response status:', backendResponse.status);
+    console.log('Backend response headers:', Object.fromEntries(backendResponse.headers.entries()));
     
     if (!backendResponse.ok) {
       const responseText = await backendResponse.text();
       console.error('Backend error response:', responseText);
+      
+      // Return a new response with the error details
+      return new Response(responseText, {
+        status: backendResponse.status,
+        statusText: backendResponse.statusText,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
     }
     
-    return backendResponse;
+    // For successful responses, read the body and create a new response
+    const responseData = await backendResponse.json();
+    return new Response(JSON.stringify(responseData), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
   } catch (error) {
     console.error('API Proxy Error:', error);
