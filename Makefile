@@ -107,6 +107,9 @@ init:  ## First time setup for fresh clone (creates configs and installs deps)
 	@echo -e "$(YELLOW)5/5: Pulling Ollama models (optional)...$(NC)"
 	@if command -v ollama >/dev/null 2>&1; then \
 		$(MAKE) pull-models; \
+		echo -e ""; \
+		echo -e "$(YELLOW)📌 Important: Start Ollama with Docker-compatible binding:$(NC)"; \
+		echo -e "   $(YELLOW)make start-ollama$(NC)  or  $(YELLOW)OLLAMA_HOST=0.0.0.0:11434 ollama serve$(NC)"; \
 	else \
 		echo -e "$(YELLOW)⚠️  Ollama not installed - skip model pulling$(NC)"; \
 		echo -e "   Install from https://ollama.ai if you want local LLM support"; \
@@ -217,11 +220,21 @@ check-ollama:  ## Check if Ollama is running and available
 				echo -e "$(YELLOW)⚠️  Model $(GENERATIVE_MODEL) not found$(NC)"; \
 				echo -e "   Run: ollama pull $(GENERATIVE_MODEL)"; \
 			fi; \
+			if ! curl -s http://0.0.0.0:11434/api/tags >/dev/null 2>&1; then \
+				echo -e "$(YELLOW)⚠️  WARNING: Ollama is only listening on localhost$(NC)"; \
+				echo -e "   Docker containers cannot reach it!"; \
+				echo -e "   Restart Ollama with: OLLAMA_HOST=0.0.0.0:11434 ollama serve"; \
+			fi; \
 		else \
 			echo -e "$(YELLOW)⚠️  Ollama is installed but not running$(NC)"; \
-			echo -e "   Run 'ollama serve' in another terminal, or:"; \
-			echo -e "   - Linux: sudo systemctl start ollama"; \
-			echo -e "   - macOS: ollama serve"; \
+			echo -e "   Run with proper binding for Docker:"; \
+			echo -e "   $(YELLOW)OLLAMA_HOST=0.0.0.0:11434 ollama serve$(NC)"; \
+			echo -e "   "; \
+			echo -e "   Or configure systemd (Linux):"; \
+			echo -e "   sudo mkdir -p /etc/systemd/system/ollama.service.d"; \
+			echo -e "   echo '[Service]' | sudo tee /etc/systemd/system/ollama.service.d/override.conf"; \
+			echo -e "   echo 'Environment=\"OLLAMA_HOST=0.0.0.0:11434\"' | sudo tee -a /etc/systemd/system/ollama.service.d/override.conf"; \
+			echo -e "   sudo systemctl daemon-reload && sudo systemctl restart ollama"; \
 		fi \
 	else \
 		echo -e "$(RED)❌ Ollama is not installed$(NC)"; \
@@ -413,10 +426,16 @@ run-prod:  ## Start services with production profile
 run-all-with-ollama:  ## Start all services including Ollama
 	@$(MAKE) check-ports
 	@if ! curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
-		echo -e "$(YELLOW)Starting Ollama in background...$(NC)"; \
-		nohup ollama serve > ollama.log 2>&1 & \
+		echo -e "$(YELLOW)Starting Ollama in background with Docker-compatible binding...$(NC)"; \
+		OLLAMA_HOST=0.0.0.0:11434 nohup ollama serve > ollama.log 2>&1 & \
 		echo $$! > .ollama.pid; \
 		sleep 3; \
+		echo -e "$(GREEN)✅ Ollama started on 0.0.0.0:11434$(NC)"; \
+	else \
+		if ! curl -s http://0.0.0.0:11434/api/tags >/dev/null 2>&1; then \
+			echo -e "$(YELLOW)⚠️  Ollama is running but only on localhost$(NC)"; \
+			echo -e "   Please restart with: OLLAMA_HOST=0.0.0.0:11434 ollama serve"; \
+		fi; \
 	fi
 	@$(MAKE) run-all
 
@@ -525,6 +544,30 @@ pull-models:  ## Pull required Ollama models
 		echo -e "$(GREEN)✅ Models pulled successfully$(NC)"; \
 	else \
 		echo -e "$(RED)❌ Ollama not installed$(NC)"; \
+	fi
+
+start-ollama:  ## Start Ollama with Docker-compatible binding
+	@echo -e "$(YELLOW)Starting Ollama with Docker-compatible binding...$(NC)"
+	@if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
+		if ! curl -s http://0.0.0.0:11434/api/tags >/dev/null 2>&1; then \
+			echo -e "$(YELLOW)⚠️  Ollama is already running on localhost only$(NC)"; \
+			echo -e "   Please stop it first and run: make start-ollama"; \
+		else \
+			echo -e "$(GREEN)✅ Ollama is already running with correct binding$(NC)"; \
+		fi; \
+	else \
+		echo -e "Starting Ollama on 0.0.0.0:11434..."; \
+		OLLAMA_HOST=0.0.0.0:11434 nohup ollama serve > ollama.log 2>&1 & \
+		echo $$! > .ollama.pid; \
+		sleep 3; \
+		if curl -s http://0.0.0.0:11434/api/tags >/dev/null 2>&1; then \
+			echo -e "$(GREEN)✅ Ollama started successfully on 0.0.0.0:11434$(NC)"; \
+			echo -e "   PID: $$(cat .ollama.pid)"; \
+			echo -e "   Logs: tail -f ollama.log"; \
+		else \
+			echo -e "$(RED)❌ Failed to start Ollama$(NC)"; \
+			[ -f ollama.log ] && tail -20 ollama.log; \
+		fi; \
 	fi
 
 fix-dockerfile:  ## Fix the Dockerfile COPY path issue
