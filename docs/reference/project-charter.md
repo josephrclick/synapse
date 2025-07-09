@@ -1,4 +1,4 @@
-### **Project Charter & Master Build Plan: Capture-v3**
+### **Project Charter & Master Build Plan: Synapse**
 
 Document Version: 4.0 (Final Build Plan)
 
@@ -6,7 +6,7 @@ Document Version: 4.0 (Final Build Plan)
 
 #### **1.1. Intent**
 
-**Capture-v3** is a private, "second brain" for professional and personal development. Its purpose is to ingest, connect, and retrieve a diverse range of data—from job descriptions and meeting notes to technical articles and dictated thoughts. It transforms this chaotic stream of information into a structured, searchable, and insightful personal knowledge graph.
+**Synapse** is a private, "second brain" for professional and personal development. Its purpose is to ingest, connect, and retrieve a diverse range of data—from job descriptions and meeting notes to technical articles and dictated thoughts. It transforms this chaotic stream of information into a structured, searchable, and insightful personal knowledge graph.
 
 #### **1.2. Core Philosophy**
 
@@ -43,7 +43,7 @@ The system follows a decoupled architecture, orchestrated locally via Docker Com
 
 ### **4\. Data Model & Schema (MVP)**
 
-#### **4.1. SQLite Database (backend/capture.db)**
+#### **4.1. SQLite Database (backend/synapse.db)**
 
 The SQLite database will contain our master records.
 

@@ -2,7 +2,7 @@
 
 # Test script for performance improvements
 
-echo "Testing Performance Improvements for Capture-v3"
+echo "Testing Performance Improvements for Synapse"
 echo "=============================================="
 echo ""
 

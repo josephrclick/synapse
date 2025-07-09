@@ -1,8 +1,8 @@
-# Final Report: Deepgram Voice Integration for Capture-v3
+# Final Report: Deepgram Voice Integration for Synapse
 
 ## Executive Summary
 
-After comprehensive research and consensus gathering, the **Hybrid Approach** is confirmed as the optimal solution for integrating Deepgram push-to-talk transcription into capture-v3. This approach balances security, simplicity, and functionality while leveraging existing infrastructure.
+After comprehensive research and consensus gathering, the **Hybrid Approach** is confirmed as the optimal solution for integrating Deepgram push-to-talk transcription into synapse. This approach balances security, simplicity, and functionality while leveraging existing infrastructure.
 
 ### Key Findings:
 - **Approach**: Frontend audio capture + Backend transcription processing
@@ -439,7 +439,7 @@ Future:  Frontend → Backend → Local Model (offline)
 
 ## Conclusion
 
-The Hybrid Approach remains the optimal choice for integrating Deepgram voice transcription into capture-v3. While the initial 2-hour estimate was optimistic, a functional MVP can be achieved in 2-3 days with proper error handling and user feedback.
+The Hybrid Approach remains the optimal choice for integrating Deepgram voice transcription into synapse. While the initial 2-hour estimate was optimistic, a functional MVP can be achieved in 2-3 days with proper error handling and user feedback.
 
 The main trade-off is the online requirement conflicting with the "local-first" philosophy, but this is acceptable for an initial implementation. The architecture provides a solid foundation for future enhancements, including potential offline capabilities through local models.
 

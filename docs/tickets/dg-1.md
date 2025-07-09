@@ -29,7 +29,7 @@ We will implement the entire feature on the frontend to maximize interaction wit
 
 ### Phase 1: Create the Voice Capture Component
 
-**File to Create:** `frontend/capture-v3/app/components/voice/DeepgramPocButton.tsx`
+**File to Create:** `frontend/synapse/app/components/voice/DeepgramPocButton.tsx`
 
 1.  **Install SDK:** In your terminal, run `npm install @deepgram/sdk`.
     
@@ -72,9 +72,9 @@ We will implement the entire feature on the frontend to maximize interaction wit
 
 ### Phase 2: Integration
 
-1.  **Add Component to UI:** Place your new `<DeepgramPocButton />` component on the main page (`/frontend/capture-v3/app/page.tsx`).
+1.  **Add Component to UI:** Place your new `<DeepgramPocButton />` component on the main page (`/frontend/synapse/app/page.tsx`).
     
-2.  **Configure Environment:** Add your Deepgram API key to `/frontend/capture-v3/.env.local`:
+2.  **Configure Environment:** Add your Deepgram API key to `/frontend/synapse/.env.local`:
     
     ```
     NEXT_PUBLIC_DEEPGRAM_API_KEY=your-deepgram-api-key-here

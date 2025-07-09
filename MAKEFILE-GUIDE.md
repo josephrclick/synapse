@@ -1,6 +1,6 @@
-# Makefile Command Guide for Capture-v3
+# Makefile Command Guide for Synapse
 
-This guide documents all available Make commands for the Capture-v3 project, organized by category.
+This guide documents all available Make commands for the Synapse project, organized by category.
 
 ## Quick Start
 
@@ -8,7 +8,7 @@ This guide documents all available Make commands for the Capture-v3 project, org
 ```bash
 # Clone and start from scratch
 git clone <repo-url>
-cd capture-v3
+cd synapse
 make run-all          # Does EVERYTHING automatically!
 ```
 

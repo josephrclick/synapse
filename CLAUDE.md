@@ -4,7 +4,7 @@ This file provides guidance to Claude Code when working with this codebase.
 
 ## Project Overview
 
-Capture-v3 is a private, local-first knowledge management system with:
+Synapse is a private, local-first knowledge management system with:
 - **Frontend**: Next.js 15 with dark mode UI and chat interface
 - **Backend**: Python 3.11/FastAPI with Haystack RAG  
 - **LLM**: Ollama (host OS) - currently using gemma3n:e4b
@@ -50,7 +50,7 @@ pip install -r requirements.txt  # Install deps in venv
 
 ### Frontend Only
 ```bash
-cd frontend/capture-v3
+cd frontend/synapse
 npm run dev             # Development server (http://localhost:8100)
 npm run build           # Production build
 npm run lint            # Run ESLint

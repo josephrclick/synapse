@@ -23,13 +23,13 @@ This guide provides the simplest, quickest way to bolt on push-to-talk voice tra
 ### Step 1: Install Deepgram SDK
 
 ```bash
-cd frontend/capture-v3
+cd frontend/synapse
 npm install @deepgram/sdk
 ```
 
 ### Step 2: Create Voice Ingestion Component
 
-Create `frontend/capture-v3/app/components/voice/VoiceCapture.tsx`:
+Create `frontend/synapse/app/components/voice/VoiceCapture.tsx`:
 
 ```tsx
 'use client';
@@ -192,7 +192,7 @@ export function VoiceCapture({ onTranscript, apiKey }: VoiceCaptureProps) {
 
 ### Step 3: Create Voice Ingestion Page
 
-Create `frontend/capture-v3/app/voice/page.tsx`:
+Create `frontend/synapse/app/voice/page.tsx`:
 
 ```tsx
 'use client';
@@ -289,7 +289,7 @@ export default function VoiceIngestionPage() {
 
 ### Step 4: Add Environment Variable
 
-Add to `frontend/capture-v3/.env.local`:
+Add to `frontend/synapse/.env.local`:
 
 ```bash
 # WARNING: Only for testing! Move to backend proxy in production
@@ -298,7 +298,7 @@ NEXT_PUBLIC_DEEPGRAM_API_KEY=your-deepgram-api-key-here
 
 ### Step 5: Add Navigation Link
 
-Update your main navigation to include the voice ingestion page. In `frontend/capture-v3/app/page.tsx` or wherever your nav is:
+Update your main navigation to include the voice ingestion page. In `frontend/synapse/app/page.tsx` or wherever your nav is:
 
 ```tsx
 <Link 

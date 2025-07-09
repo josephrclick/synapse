@@ -1,7 +1,7 @@
-# Capture-v3: Your Knowledge, Captured.
+# Synapse: Your Knowledge, Captured.
 
 <div align="center">
-  <img src="frontend/capture-v3/public/synapse-logo-2.png" alt="Capture Logo" width="400" />
+  <img src="frontend/synapse/public/synapse-logo-2.png" alt="Capture Logo" width="400" />
   
  *Your brain is full. Let's fix that.*
 </div>
@@ -12,7 +12,7 @@ Is your browser buried under 1,000 tabs of "I'll read this later"? Is your notes
 
 Good. You're in the right place.
 
-**Capture-v3** is a local-first, AI-powered knowledge management system that *actually* remembers stuff for you. Feed it articles, meeting notes, code snippets, and your half-baked shower thoughts. Then, ask it questions in plain English. It doesn't just search—it understands, synthesizes, and gives you intelligent answers, complete with citations from... well, from *you*.
+**Synapse** is a local-first, AI-powered knowledge management system that *actually* remembers stuff for you. Feed it articles, meeting notes, code snippets, and your half-baked shower thoughts. Then, ask it questions in plain English. It doesn't just search—it understands, synthesizes, and gives you intelligent answers, complete with citations from... well, from *you*.
 
 It's the ultimate "I told you so" machine, and you're telling yourself.
 
@@ -53,8 +53,8 @@ Feeling brave? Want to run this glorious beast?
 ### 🚀 The One-Command Wonder
 
 ```bash
-git clone https://github.com/yourusername/capture-v3.git
-cd capture-v3
+git clone https://github.com/yourusername/synapse.git
+cd synapse
 make init        # First time? Start here!
 make dev         # Start everything in background
 ```
@@ -137,7 +137,7 @@ make troubleshoot
 
 <div align="center">
 
-**Capture-v3** - Because your brain deserves a backup.
+**Synapse** - Because your brain deserves a backup.
 
 *Built with ☕ and too many late nights*
 

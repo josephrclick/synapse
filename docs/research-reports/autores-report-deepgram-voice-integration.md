@@ -1,7 +1,7 @@
 # Deepgram Voice Integration Research Report
 
 ## Task Overview
-Research the simplest, lowest-lift approach to integrate Deepgram cloud voice features for push-to-talk transcription in capture-v3. The goal is to add a voice ingestion element that allows users to push a button, speak, and have their speech transcribed and sent to the database.
+Research the simplest, lowest-lift approach to integrate Deepgram cloud voice features for push-to-talk transcription in synapse. The goal is to add a voice ingestion element that allows users to push a button, speak, and have their speech transcribed and sent to the database.
 
 ## Current Architecture Analysis
 

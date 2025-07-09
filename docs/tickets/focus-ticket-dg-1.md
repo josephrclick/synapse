@@ -1,6 +1,6 @@
 # Build Plan: Deepgram JavaScript SDK PoC Implementation
 
-**Project:** Capture-v3 (Synapse)  
+**Project:** Synapse (Synapse)  
 **Task ID:** dg-1  
 **Created:** 2025-07-08  
 **Priority:** URGENT (Interview Prep)
@@ -31,7 +31,7 @@ Based on expert analysis from O3, O3-Pro, and GPT-4.1:
 
 ### Component Structure
 ```
-frontend/capture-v3/
+frontend/synapse/
 ├── app/
 │   ├── components/
 │   │   └── voice/

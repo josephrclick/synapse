@@ -42,7 +42,7 @@
 
 -   \[x\] **Verified Docker Build:** Ran `docker-compose up -d --build` from the project root. The `backend` container built and started successfully.
     
--   \[x\] **Verified Health Check:** Sent a `GET` request to `http://localhost:8000/`. Received a `200 OK` response with `{"status":"ok","message":"Capture-v3 Engine is running!"}`.
+-   \[x\] **Verified Health Check:** Sent a `GET` request to `http://localhost:8000/`. Received a `200 OK` response with `{"status":"ok","message":"Synapse Engine is running!"}`.
     
 -   \[x\] **Verified API Documentation:** Navigated to `http://localhost:8000/docs` in a web browser. The FastAPI Swagger UI loaded correctly and displayed all defined endpoints.
     

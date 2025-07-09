@@ -2,7 +2,7 @@
 
 # Test script for User Experience Enhancements
 
-echo "Testing User Experience Enhancements for Capture-v3"
+echo "Testing User Experience Enhancements for Synapse"
 echo "=================================================="
 echo ""
 

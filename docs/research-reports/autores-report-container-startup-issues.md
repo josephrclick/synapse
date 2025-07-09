@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-This report analyzes multiple interconnected issues affecting the Capture-v3 project's Docker container setup, startup procedures, and package management. The investigation revealed that a critical Dockerfile misconfiguration is the root cause of most problems, with additional complexity from port configuration, module path confusion, and incorrect import suggestions.
+This report analyzes multiple interconnected issues affecting the Synapse project's Docker container setup, startup procedures, and package management. The investigation revealed that a critical Dockerfile misconfiguration is the root cause of most problems, with additional complexity from port configuration, module path confusion, and incorrect import suggestions.
 
 ## Issues Investigated
 

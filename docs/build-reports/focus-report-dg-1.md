@@ -1,6 +1,6 @@
 # Build Report: Deepgram JavaScript SDK PoC Implementation
 
-**Project:** Capture-v3 (Synapse)  
+**Project:** Synapse (Synapse)  
 **Task ID:** dg-1  
 **Completed:** 2025-07-08  
 **Developer:** Claude Code  
@@ -13,7 +13,7 @@ Successfully implemented a push-to-talk voice transcription feature using Deepgr
 ## What Was Built
 
 ### Component Created
-- **File:** `/frontend/capture-v3/app/components/voice/DeepgramPocButton.tsx`
+- **File:** `/frontend/synapse/app/components/voice/DeepgramPocButton.tsx`
 - **Type:** React client component with TypeScript
 - **Lines of Code:** 188 (within the 200 LOC target)
 - **Dependencies:** @deepgram/sdk v4.8.0
@@ -86,14 +86,14 @@ Successfully incorporated all recommendations from the AI consensus:
 ## Files Modified
 
 1. **Created:**
-   - `/frontend/capture-v3/app/components/voice/DeepgramPocButton.tsx`
+   - `/frontend/synapse/app/components/voice/DeepgramPocButton.tsx`
    - `/docs/tickets/focus-ticket-dg-1.md` (build plan)
    - `/docs/build-reports/focus-report-dg-1.md` (this report)
 
 2. **Modified:**
-   - `/frontend/capture-v3/package.json` (added @deepgram/sdk)
-   - `/frontend/capture-v3/.env.local` (added NEXT_PUBLIC_DEEPGRAM_API_KEY)
-   - `/frontend/capture-v3/app/page.tsx` (integrated component)
+   - `/frontend/synapse/package.json` (added @deepgram/sdk)
+   - `/frontend/synapse/.env.local` (added NEXT_PUBLIC_DEEPGRAM_API_KEY)
+   - `/frontend/synapse/app/page.tsx` (integrated component)
    - `/CLAUDE.md` (documented feature)
 
 ## Challenges & Solutions

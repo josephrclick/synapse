@@ -1,12 +1,12 @@
 # Makefile and Docker Compose Review Report
 
 **Date**: 2025-07-09  
-**Project**: Capture-v3 (Private Knowledge Management System)  
+**Project**: Synapse (Private Knowledge Management System)  
 **Reviewed By**: Claude Code with GPT-4.1 Analysis  
 
 ## Executive Summary
 
-This report presents a comprehensive review of the Makefile and docker-compose.yml files for the Capture-v3 project. The review identified several areas for improvement across performance optimization, user experience enhancement, necessary corrections, and general security/maintainability concerns. While the current setup is robust and developer-friendly, implementing the recommended changes will significantly improve developer workflow, cross-platform compatibility, and system reliability.
+This report presents a comprehensive review of the Makefile and docker-compose.yml files for the Synapse project. The review identified several areas for improvement across performance optimization, user experience enhancement, necessary corrections, and general security/maintainability concerns. While the current setup is robust and developer-friendly, implementing the recommended changes will significantly improve developer workflow, cross-platform compatibility, and system reliability.
 
 ## 1. Performance Improvements
 
@@ -137,7 +137,7 @@ else
 endif
 
 # Usage
-$(SED_INPLACE) 's/your-secret-api-key-here/test-api-key-123/g' frontend/capture-v3/.env.local
+$(SED_INPLACE) 's/your-secret-api-key-here/test-api-key-123/g' frontend/synapse/.env.local
 ```
 
 #### lsof Availability
@@ -204,18 +204,18 @@ ensure-backend-env:
 	fi
 
 ensure-frontend-env:
-	@if [ ! -f frontend/capture-v3/.env.local ]; then \
-		cp frontend/capture-v3/.env.local.example frontend/capture-v3/.env.local; \
-		$(SED_INPLACE) 's/your-secret-api-key-here/test-api-key-123/g' frontend/capture-v3/.env.local; \
+	@if [ ! -f frontend/synapse/.env.local ]; then \
+		cp frontend/synapse/.env.local.example frontend/synapse/.env.local; \
+		$(SED_INPLACE) 's/your-secret-api-key-here/test-api-key-123/g' frontend/synapse/.env.local; \
 	fi
 ```
 
 #### Hardcoded Paths
-**Issue**: Paths like `frontend/capture-v3` repeated throughout.
+**Issue**: Paths like `frontend/synapse` repeated throughout.
 
 **Solution**: Define as variables:
 ```makefile
-FRONTEND_DIR := frontend/capture-v3
+FRONTEND_DIR := frontend/synapse
 BACKEND_DIR := backend
 ```
 
@@ -278,7 +278,7 @@ Based on official Docker documentation:
 
 ## Conclusion
 
-The current Makefile and docker-compose.yml provide a solid foundation for the Capture-v3 project. However, implementing the recommended improvements will:
+The current Makefile and docker-compose.yml provide a solid foundation for the Synapse project. However, implementing the recommended improvements will:
 
 1. **Reduce developer friction** through better error handling and cross-platform compatibility
 2. **Improve reliability** with proper healthchecks and service dependencies

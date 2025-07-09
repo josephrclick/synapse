@@ -1,4 +1,4 @@
-# Build Plan: Project Rebrand - capture-v3 to synapse
+# Build Plan: Project Rebrand - synapse to synapse
 
 **Ticket ID:** SYN-101  
 **Date:** 2025-07-09  
@@ -38,7 +38,7 @@ Hybrid approach combining automation with logical commit separation for clarity 
 
 set -euo pipefail
 
-echo "🔄 Starting rebrand from capture-v3 to synapse..."
+echo "🔄 Starting rebrand from synapse to synapse..."
 
 # Function to perform safe replacements
 safe_replace() {
@@ -53,43 +53,43 @@ safe_replace() {
 
 # Phase 1: Backend string replacements
 echo "📦 Phase 1: Backend refactoring..."
-safe_replace "capture-v3" "synapse" "*.py"
-safe_replace "Capture-v3" "Synapse" "*.py"
+safe_replace "synapse" "synapse" "*.py"
+safe_replace "Synapse" "Synapse" "*.py"
 safe_replace "capture\\.db" "synapse.db" "*.py"
-safe_replace "capture-v3" "synapse" "*.sh"
+safe_replace "synapse" "synapse" "*.sh"
 
 # Phase 2: Configuration files
 echo "⚙️ Phase 2: Configuration updates..."
-safe_replace "capture-v3" "synapse" "*.yml"
-safe_replace "capture-v3" "synapse" "*.yaml"
-safe_replace "capture-v3" "synapse" "Makefile"
+safe_replace "synapse" "synapse" "*.yml"
+safe_replace "synapse" "synapse" "*.yaml"
+safe_replace "synapse" "synapse" "Makefile"
 safe_replace "capture-network" "synapse-network" "docker-compose.yml"
 safe_replace "capture\\." "synapse." ".gitignore"
 
 # Phase 3: Frontend updates
 echo "🎨 Phase 3: Frontend refactoring..."
-safe_replace "capture-v3" "synapse" "*.json"
-safe_replace "capture-v3" "synapse" "*.tsx"
-safe_replace "capture-v3" "synapse" "*.ts"
-safe_replace "Capture-v3" "Synapse" "*.tsx"
-safe_replace "Capture-v3" "Synapse" "*.ts"
+safe_replace "synapse" "synapse" "*.json"
+safe_replace "synapse" "synapse" "*.tsx"
+safe_replace "synapse" "synapse" "*.ts"
+safe_replace "Synapse" "Synapse" "*.tsx"
+safe_replace "Synapse" "Synapse" "*.ts"
 
 # Phase 4: Documentation
 echo "📚 Phase 4: Documentation updates..."
-safe_replace "capture-v3" "synapse" "*.md"
-safe_replace "Capture-v3" "Synapse" "*.md"
+safe_replace "synapse" "synapse" "*.md"
+safe_replace "Synapse" "Synapse" "*.md"
 safe_replace "capture\\.db" "synapse.db" "*.md"
 
 # Phase 5: Directory and file renames
 echo "📁 Phase 5: Directory and file renames..."
-if [ -d "frontend/capture-v3" ]; then
-    mv frontend/capture-v3 frontend/synapse
-    echo "  Renamed frontend/capture-v3 to frontend/synapse"
+if [ -d "frontend/synapse" ]; then
+    mv frontend/synapse frontend/synapse
+    echo "  Renamed frontend/synapse to frontend/synapse"
 fi
 
-if [ -f "capture.db" ]; then
-    cp capture.db synapse.db
-    echo "  Created synapse.db from capture.db (preserved original)"
+if [ -f "synapse.db" ]; then
+    cp synapse.db synapse.db
+    echo "  Created synapse.db from synapse.db (preserved original)"
 fi
 
 # Cleanup backup files
@@ -117,7 +117,7 @@ echo "✅ Refactoring complete!"
    ```bash
    # Backend changes
    git add backend/
-   git commit -m "refactor(backend): rebrand capture-v3 to synapse"
+   git commit -m "refactor(backend): rebrand synapse to synapse"
    
    # Configuration changes
    git add Makefile docker-compose.yml .gitignore
@@ -133,7 +133,7 @@ echo "✅ Refactoring complete!"
    
    # Database rename
    git add synapse.db
-   git commit -m "refactor(db): add synapse.db (migrated from capture.db)"
+   git commit -m "refactor(db): add synapse.db (migrated from synapse.db)"
    ```
 
 ### Phase 3: Verification & Cleanup
@@ -155,7 +155,7 @@ echo "✅ Refactoring complete!"
    ```
 
 3. **Verification checklist**:
-   - [ ] `grep -r "capture-v3" . --exclude-dir=.git` returns no results
+   - [ ] `grep -r "synapse" . --exclude-dir=.git` returns no results
    - [ ] Backend starts without errors
    - [ ] Frontend builds and runs
    - [ ] Database connections work
@@ -171,9 +171,9 @@ echo "✅ Refactoring complete!"
 ## Risk Mitigation
 
 1. **Database Strategy**: 
-   - Keep `capture.db` initially as backup
+   - Keep `synapse.db` initially as backup
    - Update connection strings to use `synapse.db`
-   - After verification, remove `capture.db`
+   - After verification, remove `synapse.db`
 
 2. **Cache Issues**:
    - Full Docker rebuild: `docker-compose build --no-cache`
@@ -187,7 +187,7 @@ echo "✅ Refactoring complete!"
 
 ## Success Criteria
 
-- Zero occurrences of "capture-v3" in codebase (excluding git history)
+- Zero occurrences of "synapse" in codebase (excluding git history)
 - All services start and communicate properly
 - Test suite passes 100%
 - Documentation reflects new branding
