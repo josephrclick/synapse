@@ -48,7 +48,7 @@ RUN python -m compileall -q /usr/local/lib/python3.11/site-packages
 RUN mkdir -p backend
 
 # Copy only the backend application code
-COPY --chown=appuser:appuser *.py ./
+COPY --chown=appuser:appuser *.py backend/
 COPY --chown=appuser:appuser pytest.ini setup_and_run.sh run_tests.sh ./
 
 # Set environment variables

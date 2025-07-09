@@ -2,10 +2,6 @@ services:
   backend:
     build:
       context: ./backend
-      cache_from:
-        - type=local,src=/tmp/.buildx-cache
-      cache_to:
-        - type=local,dest=/tmp/.buildx-cache,mode=max
     profiles:
       - ""  # Default profile (always active)
       - development

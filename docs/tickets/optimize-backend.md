@@ -44,7 +44,7 @@ This plan is designed to be executed sequentially to ensure stability at each st
 
 #### **Phase 2: Regenerate and Verify Locked Dependencies**
 
-1.  **Activate Virtual Environment:** Ensure you are in the project's Python virtual environment.
+1.  **Activate Virtual Environment:** Ensure you are in the project's Python virtual environment. `backend/venv/bin/activate`
     
 2.  **Run `pip-compile`:** Execute the following command from the repository root to regenerate the `requirements.txt` file. The `--upgrade` flag will remove the old packages and update the remaining ones to their latest compatible versions.
     
