@@ -40,7 +40,7 @@ Forged in the fires of late-night coding sessions and way too many build reports
 
 ## You Know You Want To (Quick Start)
 
-Feeling brave? Want to run this glorious beast?
+This thing is a starter kit you can build damn near anything on. Feeling brave?
 
 ### Prerequisites
 
@@ -53,7 +53,7 @@ Feeling brave? Want to run this glorious beast?
 ### 🚀 The One-Command Wonder
 
 ```bash
-git clone https://github.com/yourusername/synapse.git
+git clone https://github.com/josephrclick/synapse.git
 cd synapse
 make init        # First time? Start here!
 make run-all     # Start everything (Docker + frontend)
@@ -135,7 +135,7 @@ CHROMA_GATEWAY_PORT=8102
 ### Known "Features"
 
   * The AI sometimes gets philosophical. We consider this a feature.
-  * ChromaDB might use more RAM than Chrome. Ironic, we know.
+  * ChromaDB might use more RAM than Chrome. Isn't it ironic? Don't ya think?
   * If you feed it your diary, it might become too emotionally intelligent.
 
 -----
