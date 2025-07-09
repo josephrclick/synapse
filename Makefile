@@ -1,3 +1,44 @@
+# ========================================================================
+# Capture-v3 Makefile
+# ========================================================================
+# A comprehensive build system for the Capture-v3 knowledge management system
+# 
+# Features:
+# - Cross-platform compatibility (Linux/macOS)
+# - Automated dependency management
+# - Docker Compose service orchestration
+# - Health checking and monitoring
+# - Data backup and restore
+# - Development workflow automation
+#
+# Quick Start:
+#   make init    # First time setup
+#   make dev     # Start all services
+#   make help    # Show all commands
+#
+# Requirements:
+# - Python 3.11+
+# - Node.js 18+
+# - Docker & Docker Compose
+# - curl (for health checks)
+# ========================================================================
+
+# Shell configuration for error handling
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
+
+# Platform detection for cross-platform compatibility
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    SED_INPLACE := sed -i ''
+else
+    SED_INPLACE := sed -i
+endif
+
+# Path definitions to avoid duplication
+FRONTEND_DIR := frontend/capture-v3
+BACKEND_DIR := backend
+
 # Load environment variables
 include .env
 export
@@ -11,8 +52,9 @@ NC := \033[0m # No Color
 .PHONY: test run setup clean lint help run-backend run-frontend run-all test-all stop-all logs check-ports \
         check-ollama check-deps check-all status run-all-with-ollama rebuild-all dev-setup \
         validate-setup health-check docker-shell pull-models init fresh-start wait-for-backend wait-for-chromadb \
-        check-requirements logs-backend logs-chromadb logs-ollama backup-data run-frontend-background stop-frontend \
-        run-all-detached dev getting-started
+        check-requirements logs-backend logs-chromadb logs-ollama backup-data restore-data run-frontend-background stop-frontend \
+        run-all-detached dev getting-started ensure-env-files ensure-backend-env ensure-frontend-env docs \
+        run-debug run-prod build-with-cache security-check
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
@@ -44,19 +86,7 @@ init:  ## First time setup for fresh clone (creates configs and installs deps)
 	@$(MAKE) check-requirements || { echo "$(RED)Please install missing requirements first$(NC)"; exit 1; }
 	@echo ""
 	@echo "$(YELLOW)Step 1/5: Creating configuration files...$(NC)"
-	@if [ ! -f .env ]; then \
-		cp .env.example .env; \
-		echo "$(GREEN)✅ Created .env from example$(NC)"; \
-	else \
-		echo "$(GREEN)✅ .env already exists$(NC)"; \
-	fi
-	@if [ ! -f frontend/capture-v3/.env.local ]; then \
-		cp frontend/capture-v3/.env.local.example frontend/capture-v3/.env.local; \
-		sed -i 's/your-secret-api-key-here/test-api-key-123/g' frontend/capture-v3/.env.local; \
-		echo "$(GREEN)✅ Created frontend .env.local$(NC)"; \
-	else \
-		echo "$(GREEN)✅ Frontend .env.local already exists$(NC)"; \
-	fi
+	@$(MAKE) ensure-env-files
 	@echo ""
 	@echo "$(YELLOW)2/5: Installing backend dependencies...$(NC)"
 	@$(MAKE) setup
@@ -103,18 +133,35 @@ fresh-start:  ## Complete fresh start (clean + init + run)
 	@echo "Run: make run-all"
 
 setup:  ## Setup virtual environment and install dependencies
-	@if [ ! -d "venv" ] || [ "backend/requirements.txt" -nt "venv/.deps-installed" ] || [ "backend/requirements-dev.txt" -nt "venv/.deps-installed" ]; then \
+	@if [ ! -d "venv" ] || [ "$(BACKEND_DIR)/requirements.txt" -nt "venv/.deps-installed" ] || [ "$(BACKEND_DIR)/requirements-dev.txt" -nt "venv/.deps-installed" ]; then \
 		echo "$(YELLOW)Setting up Python environment...$(NC)"; \
 		python3 -m venv venv; \
 		./venv/bin/pip install --upgrade pip; \
 		echo "$(YELLOW)Installing production dependencies...$(NC)"; \
-		./venv/bin/pip install -r backend/requirements.txt; \
+		./venv/bin/pip install -r $(BACKEND_DIR)/requirements.txt; \
 		echo "$(YELLOW)Installing development dependencies...$(NC)"; \
-		./venv/bin/pip install -r backend/requirements-dev.txt; \
+		./venv/bin/pip install -r $(BACKEND_DIR)/requirements-dev.txt; \
 		touch venv/.deps-installed; \
 		echo "$(GREEN)✅ Dependencies installed successfully$(NC)"; \
 	else \
 		echo "$(GREEN)✅ Dependencies already installed and up-to-date$(NC)"; \
+	fi
+
+ensure-env-files:  ## Ensure all required env files exist
+	@$(MAKE) ensure-backend-env
+	@$(MAKE) ensure-frontend-env
+
+ensure-backend-env:  ## Ensure backend .env file exists
+	@if [ ! -f .env ]; then \
+		cp .env.example .env; \
+		echo "$(GREEN)✅ Created .env from example$(NC)"; \
+	fi
+
+ensure-frontend-env:  ## Ensure frontend .env.local file exists
+	@if [ ! -f $(FRONTEND_DIR)/.env.local ]; then \
+		cp $(FRONTEND_DIR)/.env.local.example $(FRONTEND_DIR)/.env.local; \
+		$(SED_INPLACE) 's/your-secret-api-key-here/test-api-key-123/g' $(FRONTEND_DIR)/.env.local; \
+		echo "$(GREEN)✅ Created frontend .env.local with default API key$(NC)"; \
 	fi
 
 run:  ## Start the backend server (alias for run-backend)
@@ -122,15 +169,15 @@ run:  ## Start the backend server (alias for run-backend)
 
 run-backend:  ## Start backend API server
 	@echo "Starting backend API on port $(API_PORT)..."
-	cd backend && ./setup_and_run.sh
+	cd $(BACKEND_DIR) && ./setup_and_run.sh
 
 run-frontend:  ## Start frontend dev server
 	@echo "Starting frontend dev server on port $(FRONTEND_PORT)..."
-	cd frontend/capture-v3 && npm run dev
+	cd $(FRONTEND_DIR) && npm run dev
 
 run-frontend-background:  ## Start frontend dev server in background
 	@echo "$(YELLOW)Starting frontend dev server in background on port $(FRONTEND_PORT)...$(NC)"
-	@cd frontend/capture-v3 && nohup npm run dev > ../../frontend.log 2>&1 & echo $$! > ../../.frontend.pid
+	@cd $(FRONTEND_DIR) && nohup npm run dev > ../../frontend.log 2>&1 & echo $$! > ../../.frontend.pid
 	@sleep 2
 	@if [ -f .frontend.pid ] && kill -0 $$(cat .frontend.pid) 2>/dev/null; then \
 		echo "$(GREEN)✅ Frontend started in background (PID: $$(cat .frontend.pid))$(NC)"; \
@@ -262,31 +309,13 @@ status:  ## Show status of all services
 
 run-all:  ## Start all services (docker + frontend) - works from fresh clone
 	@echo "$(YELLOW)Preparing environment...$(NC)"
-	@if [ ! -f .env ]; then \
-		if [ -f .env.example ]; then \
-			echo "Creating .env from .env.example..."; \
-			cp .env.example .env; \
-			echo "$(GREEN)✅ .env file created$(NC)"; \
-		else \
-			echo "$(RED)❌ No .env or .env.example found!$(NC)"; \
-			echo "Please create a .env file with required variables"; \
-			exit 1; \
-		fi \
-	fi
-	@if [ ! -f frontend/capture-v3/.env.local ]; then \
-		if [ -f frontend/capture-v3/.env.local.example ]; then \
-			echo "Creating frontend .env.local from example..."; \
-			cp frontend/capture-v3/.env.local.example frontend/capture-v3/.env.local; \
-			sed -i 's/your-secret-api-key-here/test-api-key-123/g' frontend/capture-v3/.env.local; \
-			echo "$(GREEN)✅ Frontend .env.local created$(NC)"; \
-		fi \
-	fi
-	@if [ ! -d frontend/capture-v3/node_modules ]; then \
+	@$(MAKE) ensure-env-files
+	@if [ ! -d $(FRONTEND_DIR)/node_modules ]; then \
 		echo "$(YELLOW)Installing frontend dependencies...$(NC)"; \
-		cd frontend/capture-v3 && npm install && cd ../..; \
+		cd $(FRONTEND_DIR) && npm install; \
 		echo "$(GREEN)✅ Frontend dependencies installed$(NC)"; \
 	fi
-	@if [ ! -d backend/venv ]; then \
+	@if [ ! -d $(BACKEND_DIR)/venv ]; then \
 		echo "$(YELLOW)Setting up Python virtual environment...$(NC)"; \
 		$(MAKE) setup; \
 		echo "$(GREEN)✅ Backend dependencies installed$(NC)"; \
@@ -302,36 +331,18 @@ run-all:  ## Start all services (docker + frontend) - works from fresh clone
 	@$(MAKE) health-check
 	@echo ""
 	@echo "$(YELLOW)Starting frontend...$(NC)"
-	cd frontend/capture-v3 && npm run dev
+	cd $(FRONTEND_DIR) && npm run dev
 
 run-all-detached:  ## Start all services in background (non-blocking)
 	@$(MAKE) check-requirements
 	@echo "$(YELLOW)Preparing environment...$(NC)"
-	@if [ ! -f .env ]; then \
-		if [ -f .env.example ]; then \
-			echo "Creating .env from .env.example..."; \
-			cp .env.example .env; \
-			echo "$(GREEN)✅ .env file created$(NC)"; \
-		else \
-			echo "$(RED)❌ No .env or .env.example found!$(NC)"; \
-			echo "Please create a .env file with required variables"; \
-			exit 1; \
-		fi \
-	fi
-	@if [ ! -f frontend/capture-v3/.env.local ]; then \
-		if [ -f frontend/capture-v3/.env.local.example ]; then \
-			echo "Creating frontend .env.local from example..."; \
-			cp frontend/capture-v3/.env.local.example frontend/capture-v3/.env.local; \
-			sed -i 's/your-secret-api-key-here/test-api-key-123/g' frontend/capture-v3/.env.local; \
-			echo "$(GREEN)✅ Frontend .env.local created$(NC)"; \
-		fi \
-	fi
-	@if [ ! -d frontend/capture-v3/node_modules ]; then \
+	@$(MAKE) ensure-env-files
+	@if [ ! -d $(FRONTEND_DIR)/node_modules ]; then \
 		echo "$(YELLOW)Installing frontend dependencies...$(NC)"; \
-		cd frontend/capture-v3 && npm install && cd ../..; \
+		cd $(FRONTEND_DIR) && npm install; \
 		echo "$(GREEN)✅ Frontend dependencies installed$(NC)"; \
 	fi
-	@if [ ! -d backend/venv ]; then \
+	@if [ ! -d $(BACKEND_DIR)/venv ]; then \
 		echo "$(YELLOW)Setting up Python virtual environment...$(NC)"; \
 		$(MAKE) setup; \
 		echo "$(GREEN)✅ Backend dependencies installed$(NC)"; \
@@ -364,6 +375,34 @@ run-all-detached:  ## Start all services in background (non-blocking)
 dev:  ## Start development environment (alias for run-all-detached)
 	@$(MAKE) run-all-detached
 
+run-debug:  ## Start services with debug profile (includes netshoot container)
+	@echo "$(YELLOW)Starting services with debug profile...$(NC)"
+	@$(MAKE) ensure-env-files
+	@$(MAKE) check-ports
+	docker compose --profile debug up -d
+	@$(MAKE) wait-for-chromadb
+	@$(MAKE) wait-for-backend
+	@echo "$(GREEN)✅ Debug environment ready$(NC)"
+	@echo "Debug container: docker compose exec debug sh"
+
+run-prod:  ## Start services with production profile
+	@echo "$(YELLOW)Starting services with production profile...$(NC)"
+	@if [ -f .env.production ]; then \
+		echo "$(GREEN)Using .env.production$(NC)"; \
+		cp .env .env.backup 2>/dev/null || true; \
+		cp .env.production .env; \
+	else \
+		echo "$(YELLOW)⚠️  No .env.production found, using default .env$(NC)"; \
+		echo "   Create from: cp .env.production.example .env.production"; \
+	fi
+	@$(MAKE) ensure-env-files
+	@$(MAKE) check-ports
+	@$(MAKE) security-check
+	docker compose --profile production up -d
+	@$(MAKE) wait-for-chromadb
+	@$(MAKE) wait-for-backend
+	@echo "$(GREEN)✅ Production environment ready$(NC)"
+
 run-all-with-ollama:  ## Start all services including Ollama
 	@$(MAKE) check-ports
 	@if ! curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
@@ -379,6 +418,12 @@ rebuild-all:  ## Rebuild all Docker images (no cache) and start services
 	docker compose down
 	docker compose build --no-cache
 	@$(MAKE) run-all
+
+build-with-cache:  ## Build images with cache optimization
+	@echo "$(YELLOW)Building with cache optimization...$(NC)"
+	@mkdir -p /tmp/.buildx-cache
+	DOCKER_BUILDKIT=1 docker compose build
+	@echo "$(GREEN)✅ Build complete with cache$(NC)"
 
 dev-setup:  ## Complete development environment setup
 	@echo "$(YELLOW)Setting up development environment...$(NC)"
@@ -416,7 +461,7 @@ validate-setup:  ## Validate the entire setup configuration
 		exit 1; \
 	fi
 	@echo -n "Checking backend Dockerfile: "
-	@if grep -q "COPY --chown=appuser:appuser \*.py \./" backend/Dockerfile 2>/dev/null; then \
+	@if grep -q "COPY --chown=appuser:appuser \*.py \./" $(BACKEND_DIR)/Dockerfile 2>/dev/null; then \
 		echo "$(GREEN)✅ Correct$(NC)"; \
 	else \
 		echo "$(RED)❌ Needs fix (wrong COPY path)$(NC)"; \
@@ -477,10 +522,10 @@ pull-models:  ## Pull required Ollama models
 
 fix-dockerfile:  ## Fix the Dockerfile COPY path issue
 	@echo "$(YELLOW)Fixing Dockerfile...$(NC)"
-	@cp backend/Dockerfile backend/Dockerfile.bak
-	@sed -i 's/COPY --chown=appuser:appuser \*.py backend\//COPY --chown=appuser:appuser *.py .\//g' backend/Dockerfile
+	@cp $(BACKEND_DIR)/Dockerfile $(BACKEND_DIR)/Dockerfile.bak
+	@$(SED_INPLACE) 's/COPY --chown=appuser:appuser \*.py backend\//COPY --chown=appuser:appuser *.py .\//g' $(BACKEND_DIR)/Dockerfile
 	@echo "$(GREEN)✅ Dockerfile fixed$(NC)"
-	@echo "   Backup saved to backend/Dockerfile.bak"
+	@echo "   Backup saved to $(BACKEND_DIR)/Dockerfile.bak"
 	@echo "   Run 'make rebuild-all' to rebuild with the fix"
 
 wait-for-backend:  ## Wait for backend to be healthy
@@ -591,16 +636,67 @@ query-test:  ## Test RAG query
 
 backup-data:  ## Backup SQLite database and ChromaDB data
 	@echo "$(YELLOW)Backing up data...$(NC)"
-	@mkdir -p backups/$(shell date +%Y%m%d_%H%M%S)
-	@if [ -f backend/capture.db ]; then \
-		cp backend/capture.db backups/$(shell date +%Y%m%d_%H%M%S)/; \
+	@BACKUP_DIR="backups/$$(date +%Y%m%d_%H%M%S)"; \
+	mkdir -p "$$BACKUP_DIR"; \
+	if [ -f $(BACKEND_DIR)/capture.db ]; then \
+		cp $(BACKEND_DIR)/capture.db "$$BACKUP_DIR/"; \
 		echo "$(GREEN)✅ SQLite database backed up$(NC)"; \
-	fi
-	@if [ -d chromadb_data ]; then \
-		cp -r chromadb_data backups/$(shell date +%Y%m%d_%H%M%S)/; \
+	else \
+		echo "$(YELLOW)⚠️  No SQLite database found$(NC)"; \
+	fi; \
+	if [ -d chromadb_data ]; then \
+		cp -r chromadb_data "$$BACKUP_DIR/"; \
 		echo "$(GREEN)✅ ChromaDB data backed up$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  No ChromaDB data found$(NC)"; \
+	fi; \
+	echo "$(GREEN)Backup saved to: $$BACKUP_DIR/$(NC)"
+
+restore-data:  ## Restore SQLite database and ChromaDB data from backup
+	@echo "$(YELLOW)Available backups:$(NC)"
+	@if [ -d backups ]; then \
+		ls -1dt backups/*/ 2>/dev/null | head -10 | nl -v 1 || echo "$(RED)No backups found$(NC)"; \
+	else \
+		echo "$(RED)No backups directory found$(NC)"; \
+		exit 1; \
 	fi
-	@echo "Backup saved to: backups/$(shell date +%Y%m%d_%H%M%S)/"
+	@echo ""
+	@read -p "Enter backup number to restore (or full path): " backup_choice; \
+	if [ -z "$$backup_choice" ]; then \
+		echo "$(RED)❌ No backup selected$(NC)"; \
+		exit 1; \
+	fi; \
+	if [ -d "$$backup_choice" ]; then \
+		BACKUP_PATH="$$backup_choice"; \
+	else \
+		BACKUP_PATH=$$(ls -1dt backups/*/ 2>/dev/null | sed -n "$${backup_choice}p"); \
+	fi; \
+	if [ -z "$$BACKUP_PATH" ] || [ ! -d "$$BACKUP_PATH" ]; then \
+		echo "$(RED)❌ Invalid backup selection$(NC)"; \
+		exit 1; \
+	fi; \
+	echo "$(YELLOW)Restoring from: $$BACKUP_PATH$(NC)"; \
+	echo "$(RED)WARNING: This will overwrite existing data!$(NC)"; \
+	read -p "Continue? (y/N): " confirm; \
+	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
+		echo "$(YELLOW)Restore cancelled$(NC)"; \
+		exit 0; \
+	fi; \
+	if [ -f "$$BACKUP_PATH/capture.db" ]; then \
+		cp "$$BACKUP_PATH/capture.db" $(BACKEND_DIR)/capture.db; \
+		echo "$(GREEN)✅ SQLite database restored$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  No SQLite database in backup$(NC)"; \
+	fi; \
+	if [ -d "$$BACKUP_PATH/chromadb_data" ]; then \
+		rm -rf chromadb_data; \
+		cp -r "$$BACKUP_PATH/chromadb_data" chromadb_data; \
+		echo "$(GREEN)✅ ChromaDB data restored$(NC)"; \
+	else \
+		echo "$(YELLOW)⚠️  No ChromaDB data in backup$(NC)"; \
+	fi; \
+	echo "$(GREEN)✅ Restore complete from: $$BACKUP_PATH$(NC)"; \
+	echo "$(YELLOW)Note: Restart services with 'make stop-all && make dev' to use restored data$(NC)"
 
 monitor:  ## Live monitoring dashboard (requires watch command)
 	@if command -v watch >/dev/null 2>&1; then \
@@ -609,6 +705,102 @@ monitor:  ## Live monitoring dashboard (requires watch command)
 		echo "$(RED)❌ 'watch' command not found$(NC)"; \
 		echo "Install with: sudo apt-get install watch (Linux) or brew install watch (macOS)"; \
 	fi
+
+docs:  ## Show comprehensive documentation
+	@echo "$(YELLOW)📚 Capture-v3 Makefile Documentation$(NC)"
+	@echo ""
+	@echo "$(GREEN)=== Quick Start ===$(NC)"
+	@echo "For new users, run these commands in order:"
+	@echo "  1. $(YELLOW)make init$(NC)         - Initialize project from fresh clone"
+	@echo "  2. $(YELLOW)make dev$(NC)          - Start all services in background"
+	@echo "  3. $(YELLOW)make status$(NC)       - Check if everything is running"
+	@echo ""
+	@echo "$(GREEN)=== Common Workflows ===$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Development:$(NC)"
+	@echo "  make dev             - Start all services in background (recommended)"
+	@echo "  make stop-all        - Stop all services"
+	@echo "  make logs            - View all logs"
+	@echo "  make status          - Check service health"
+	@echo ""
+	@echo "$(YELLOW)Troubleshooting:$(NC)"
+	@echo "  make troubleshoot    - Interactive troubleshooting guide"
+	@echo "  make check-deps      - Verify all dependencies"
+	@echo "  make check-ports     - Check if ports are available"
+	@echo "  make health-check    - Detailed health status"
+	@echo ""
+	@echo "$(YELLOW)Data Management:$(NC)"
+	@echo "  make backup-data     - Backup SQLite and ChromaDB data"
+	@echo "  make restore-data    - Restore from backup"
+	@echo ""
+	@echo "$(GREEN)=== Service Ports ===$(NC)"
+	@echo "  Frontend:     http://localhost:$(FRONTEND_PORT)"
+	@echo "  Backend API:  http://localhost:$(API_PORT)"
+	@echo "  API Docs:     http://localhost:$(API_PORT)/docs"
+	@echo "  ChromaDB:     http://localhost:$(CHROMA_GATEWAY_PORT)"
+	@echo ""
+	@echo "$(GREEN)=== Environment Files ===$(NC)"
+	@echo "  Root .env:                    Main configuration (ports, API keys)"
+	@echo "  $(FRONTEND_DIR)/.env.local:    Frontend config (backend URL, API key)"
+	@echo "  $(BACKEND_DIR)/.env.development:  Backend config (models, DB paths)"
+	@echo ""
+	@echo "$(GREEN)=== Docker Services ===$(NC)"
+	@echo "  backend:  FastAPI application with Haystack RAG"
+	@echo "  chromadb: Vector database for embeddings"
+	@echo ""
+	@echo "$(GREEN)=== Advanced Features ===$(NC)"
+	@echo "  make rebuild-all     - Force rebuild all Docker images"
+	@echo "  make docker-shell    - Open shell in backend container"
+	@echo "  make pull-models     - Download Ollama models"
+	@echo "  make monitor         - Live monitoring dashboard"
+	@echo ""
+	@echo "For all available commands: $(YELLOW)make help$(NC)"
+
+security-check:  ## Run security checks and recommendations
+	@echo "$(YELLOW)🔒 Security Check$(NC)"
+	@echo ""
+	@echo "$(YELLOW)Checking environment files...$(NC)"
+	@if [ -f .env ] && grep -q "your-secret-api-key-here\|test-api-key-123" .env; then \
+		echo "$(RED)⚠️  WARNING: Default API key detected in .env$(NC)"; \
+		echo "   Generate secure key: openssl rand -hex 32"; \
+	else \
+		echo "$(GREEN)✅ No default API keys in .env$(NC)"; \
+	fi
+	@if [ -f $(FRONTEND_DIR)/.env.local ] && grep -q "your-secret-api-key-here\|test-api-key-123" $(FRONTEND_DIR)/.env.local; then \
+		echo "$(RED)⚠️  WARNING: Default API key in frontend .env.local$(NC)"; \
+	else \
+		echo "$(GREEN)✅ No default API keys in frontend config$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(YELLOW)Checking ChromaDB settings...$(NC)"
+	@if [ -f .env ] && grep -q "CHROMADB_ALLOW_RESET=TRUE" .env; then \
+		echo "$(YELLOW)⚠️  ChromaDB ALLOW_RESET is TRUE$(NC)"; \
+		echo "   Set to FALSE for production environments"; \
+	else \
+		echo "$(GREEN)✅ ChromaDB ALLOW_RESET is secure$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(YELLOW)Checking Git security...$(NC)"
+	@if git ls-files --error-unmatch .env >/dev/null 2>&1; then \
+		echo "$(RED)⚠️  WARNING: .env is tracked in Git!$(NC)"; \
+		echo "   Run: git rm --cached .env"; \
+	else \
+		echo "$(GREEN)✅ .env is not tracked in Git$(NC)"; \
+	fi
+	@if git ls-files --error-unmatch $(FRONTEND_DIR)/.env.local >/dev/null 2>&1; then \
+		echo "$(RED)⚠️  WARNING: frontend .env.local is tracked in Git!$(NC)"; \
+	else \
+		echo "$(GREEN)✅ Frontend .env.local is not tracked$(NC)"; \
+	fi
+	@echo ""
+	@echo "$(YELLOW)Recommendations:$(NC)"
+	@echo "  1. Use environment-specific .env files (.env.production)"
+	@echo "  2. Rotate API keys regularly"
+	@echo "  3. Use Docker secrets for sensitive data in production"
+	@echo "  4. Enable HTTPS for production deployments"
+	@echo "  5. Review docker-compose resource limits"
+	@echo ""
+	@echo "$(GREEN)Security check complete$(NC)"
 
 debug-env:  ## Show all environment variables
 	@echo "$(YELLOW)Environment Configuration:$(NC)"

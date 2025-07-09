@@ -2,7 +2,13 @@ backend/.venv/
 backend/__pycache__/
 __pycache__/
 node_modules/
+# Environment files
 .env
+.env.*
+!.env.example
+*.env
+frontend/**/.env.local
+!frontend/**/.env.local.example
 .archive/
 venv/
 .cursorrules

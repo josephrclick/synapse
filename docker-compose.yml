@@ -4,6 +4,14 @@ services:
   backend:
     build:
       context: ./backend
+      cache_from:
+        - type=local,src=/tmp/.buildx-cache
+      cache_to:
+        - type=local,dest=/tmp/.buildx-cache,mode=max
+    profiles:
+      - ""  # Default profile (always active)
+      - development
+      - production
     ports:
       - "${API_PORT:-8101}:${API_CONTAINER_PORT:-8000}"
     volumes:
@@ -37,6 +45,10 @@ services:
 
   chromadb:
     image: chromadb/chroma:latest
+    profiles:
+      - ""  # Default profile (always active)
+      - development
+      - production
     ports:
       - "${CHROMA_GATEWAY_PORT:-8102}:${CHROMA_CONTAINER_PORT:-8000}"
     env_file:
@@ -45,7 +57,7 @@ services:
       - chroma_data:/chroma/chroma
     environment:
       - IS_PERSISTENT=TRUE
-      - ALLOW_RESET=TRUE
+      - ALLOW_RESET=${CHROMADB_ALLOW_RESET:-TRUE}  # Set to FALSE in production
     networks:
       - capture-network
     restart: unless-stopped
@@ -63,6 +75,18 @@ services:
         reservations:
           cpus: '0.25'
           memory: 256M
+
+  # Debug service for troubleshooting
+  debug:
+    image: nicolaka/netshoot:latest
+    profiles:
+      - debug
+    command: tail -f /dev/null
+    networks:
+      - capture-network
+    depends_on:
+      - backend
+      - chromadb
 
 volumes:
   chroma_data:
