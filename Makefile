@@ -43,6 +43,13 @@ BACKEND_DIR ?= backend
 -include .env
 export
 
+# Default values for critical variables (in case .env is missing)
+FRONTEND_PORT ?= 8100
+API_PORT ?= 8101
+CHROMA_GATEWAY_PORT ?= 8102
+API_CONTAINER_PORT ?= 8000
+GENERATIVE_MODEL ?= gemma3n:e4b
+
 # Color definitions
 GREEN := \033[0;32m
 YELLOW := \033[0;33m
@@ -60,91 +67,91 @@ help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
 
 getting-started:  ## Show getting started guide
-	@echo "$(YELLOW)🚀 Getting Started with Capture-v3$(NC)"
-	@echo ""
-	@echo "$(GREEN)First time setup:$(NC)"
-	@echo "  1. $(YELLOW)make init$(NC)        - Initialize project from fresh clone"
-	@echo "  2. $(YELLOW)make dev$(NC)         - Start all services in background"
-	@echo ""
-	@echo "$(GREEN)Daily workflow:$(NC)"
-	@echo "  - $(YELLOW)make dev$(NC)         - Start development environment"
-	@echo "  - $(YELLOW)make status$(NC)      - Check if everything is running"
-	@echo "  - $(YELLOW)make logs$(NC)        - View logs from all services"
-	@echo "  - $(YELLOW)make stop-all$(NC)    - Stop when done"
-	@echo ""
-	@echo "$(GREEN)Troubleshooting:$(NC)"
-	@echo "  - $(YELLOW)make check-ports$(NC) - Check if ports are available"
-	@echo "  - $(YELLOW)make check-deps$(NC)  - Verify all dependencies"
-	@echo "  - $(YELLOW)make troubleshoot$(NC) - Interactive troubleshooting"
-	@echo ""
-	@echo "For all commands: $(YELLOW)make help$(NC)"
+	@echo -e "$(YELLOW)🚀 Getting Started with Synapse$(NC)"
+	@echo -e ""
+	@echo -e "$(GREEN)First time setup:$(NC)"
+	@echo -e "  1. $(YELLOW)make init$(NC)        - Initialize project from fresh clone"
+	@echo -e "  2. $(YELLOW)make dev$(NC)         - Start all services in background"
+	@echo -e ""
+	@echo -e "$(GREEN)Daily workflow:$(NC)"
+	@echo -e "  - $(YELLOW)make dev$(NC)         - Start development environment"
+	@echo -e "  - $(YELLOW)make status$(NC)      - Check if everything is running"
+	@echo -e "  - $(YELLOW)make logs$(NC)        - View logs from all services"
+	@echo -e "  - $(YELLOW)make stop-all$(NC)    - Stop when done"
+	@echo -e ""
+	@echo -e "$(GREEN)Troubleshooting:$(NC)"
+	@echo -e "  - $(YELLOW)make check-ports$(NC) - Check if ports are available"
+	@echo -e "  - $(YELLOW)make check-deps$(NC)  - Verify all dependencies"
+	@echo -e "  - $(YELLOW)make troubleshoot$(NC) - Interactive troubleshooting"
+	@echo -e ""
+	@echo -e "For all commands: $(YELLOW)make help$(NC)"
 
 init:  ## First time setup for fresh clone (creates configs and installs deps)
-	@echo "$(YELLOW)🚀 Initializing Synapse from fresh clone...$(NC)"
-	@echo ""
-	@echo "$(YELLOW)Step 0: Checking requirements...$(NC)"
-	@$(MAKE) check-requirements || { echo "$(RED)Please install missing requirements first$(NC)"; exit 1; }
-	@echo ""
-	@echo "$(YELLOW)Step 1/5: Creating configuration files...$(NC)"
+	@echo -e "$(YELLOW)🚀 Initializing Synapse from fresh clone...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Step 0: Checking requirements...$(NC)"
+	@$(MAKE) check-requirements || { echo -e "$(RED)Please install missing requirements first$(NC)"; exit 1; }
+	@echo -e ""
+	@echo -e "$(YELLOW)Step 1/5: Creating configuration files...$(NC)"
 	@$(MAKE) ensure-env-files
-	@echo ""
-	@echo "$(YELLOW)2/5: Installing backend dependencies...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)2/5: Installing backend dependencies...$(NC)"
 	@$(MAKE) setup
-	@echo ""
-	@echo "$(YELLOW)3/5: Installing frontend dependencies...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)3/5: Installing frontend dependencies...$(NC)"
 	@cd $(FRONTEND_DIR) && npm install
-	@echo ""
-	@echo "$(YELLOW)4/5: Checking Docker setup...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)4/5: Checking Docker setup...$(NC)"
 	@$(MAKE) validate-setup
-	@echo ""
-	@echo "$(YELLOW)5/5: Pulling Ollama models (optional)...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)5/5: Pulling Ollama models (optional)...$(NC)"
 	@if command -v ollama >/dev/null 2>&1; then \
 		$(MAKE) pull-models; \
 	else \
-		echo "$(YELLOW)⚠️  Ollama not installed - skip model pulling$(NC)"; \
-		echo "   Install from https://ollama.ai if you want local LLM support"; \
+		echo -e "$(YELLOW)⚠️  Ollama not installed - skip model pulling$(NC)"; \
+		echo -e "   Install from https://ollama.ai if you want local LLM support"; \
 	fi
-	@echo ""
-	@echo "$(GREEN)✅ Initialization complete!$(NC)"
-	@echo ""
-	@echo "🎯 Quick Start Options:"
-	@echo "  $(YELLOW)make dev$(NC)          - Start all services in background (recommended)"
-	@echo "  $(YELLOW)make run-all$(NC)      - Start all services (frontend blocks terminal)"
-	@echo ""
-	@echo "📍 Access Points:"
-	@echo "  Frontend:    http://localhost:$(FRONTEND_PORT)"
-	@echo "  Backend API: http://localhost:$(API_PORT)"
-	@echo "  API Docs:    http://localhost:$(API_PORT)/docs"
-	@echo ""
-	@echo "🛠️  Useful Commands:"
-	@echo "  $(YELLOW)make status$(NC)       - Check service status"
-	@echo "  $(YELLOW)make logs$(NC)         - View all logs"
-	@echo "  $(YELLOW)make stop-all$(NC)     - Stop everything"
-	@echo "  $(YELLOW)make help$(NC)         - Show all available commands"
-	@echo ""
-	@echo "If you have issues, run: $(YELLOW)make troubleshoot$(NC)"
+	@echo -e ""
+	@echo -e "$(GREEN)✅ Initialization complete!$(NC)"
+	@echo -e ""
+	@echo -e "🎯 Quick Start Options:"
+	@echo -e "  $(YELLOW)make dev$(NC)          - Start all services in background (recommended)"
+	@echo -e "  $(YELLOW)make run-all$(NC)      - Start all services (frontend blocks terminal)"
+	@echo -e ""
+	@echo -e "📍 Access Points:"
+	@echo -e "  Frontend:    http://localhost:$(FRONTEND_PORT)"
+	@echo -e "  Backend API: http://localhost:$(API_PORT)"
+	@echo -e "  API Docs:    http://localhost:$(API_PORT)/docs"
+	@echo -e ""
+	@echo -e "🛠️  Useful Commands:"
+	@echo -e "  $(YELLOW)make status$(NC)       - Check service status"
+	@echo -e "  $(YELLOW)make logs$(NC)         - View all logs"
+	@echo -e "  $(YELLOW)make stop-all$(NC)     - Stop everything"
+	@echo -e "  $(YELLOW)make help$(NC)         - Show all available commands"
+	@echo -e ""
+	@echo -e "If you have issues, run: $(YELLOW)make troubleshoot$(NC)"
 
 fresh-start:  ## Complete fresh start (clean + init + run)
-	@echo "$(YELLOW)🧹 Starting fresh...$(NC)"
+	@echo -e "$(YELLOW)🧹 Starting fresh...$(NC)"
 	@$(MAKE) clean
 	@$(MAKE) init
-	@echo ""
-	@echo "$(YELLOW)Ready to start services!$(NC)"
-	@echo "Run: make run-all"
+	@echo -e ""
+	@echo -e "$(YELLOW)Ready to start services!$(NC)"
+	@echo -e "Run: make run-all"
 
 setup:  ## Setup virtual environment and install dependencies
 	@if [ ! -d "venv" ] || [ "$(BACKEND_DIR)/requirements.txt" -nt "venv/.deps-installed" ] || [ "$(BACKEND_DIR)/requirements-dev.txt" -nt "venv/.deps-installed" ]; then \
-		echo "$(YELLOW)Setting up Python environment...$(NC)"; \
+		echo -e "$(YELLOW)Setting up Python environment...$(NC)"; \
 		python3 -m venv venv; \
 		./venv/bin/pip install --upgrade pip; \
-		echo "$(YELLOW)Installing production dependencies...$(NC)"; \
+		echo -e "$(YELLOW)Installing production dependencies...$(NC)"; \
 		./venv/bin/pip install -r $(BACKEND_DIR)/requirements.txt; \
-		echo "$(YELLOW)Installing development dependencies...$(NC)"; \
+		echo -e "$(YELLOW)Installing development dependencies...$(NC)"; \
 		./venv/bin/pip install -r $(BACKEND_DIR)/requirements-dev.txt; \
 		touch venv/.deps-installed; \
-		echo "$(GREEN)✅ Dependencies installed successfully$(NC)"; \
+		echo -e "$(GREEN)✅ Dependencies installed successfully$(NC)"; \
 	else \
-		echo "$(GREEN)✅ Dependencies already installed and up-to-date$(NC)"; \
+		echo -e "$(GREEN)✅ Dependencies already installed and up-to-date$(NC)"; \
 	fi
 
 ensure-env-files:  ## Ensure all required env files exist
@@ -154,246 +161,246 @@ ensure-env-files:  ## Ensure all required env files exist
 ensure-backend-env:  ## Ensure backend .env file exists
 	@if [ ! -f .env ]; then \
 		cp .env.example .env; \
-		echo "$(GREEN)✅ Created .env from example$(NC)"; \
+		echo -e "$(GREEN)✅ Created .env from example$(NC)"; \
 	fi
 
 ensure-frontend-env:  ## Ensure frontend .env.local file exists
 	@if [ ! -f $(FRONTEND_DIR)/.env.local ]; then \
 		cp $(FRONTEND_DIR)/.env.local.example $(FRONTEND_DIR)/.env.local; \
 		$(SED_INPLACE) 's/your-secret-api-key-here/test-api-key-123/g' $(FRONTEND_DIR)/.env.local; \
-		echo "$(GREEN)✅ Created frontend .env.local with default API key$(NC)"; \
+		echo -e "$(GREEN)✅ Created frontend .env.local with default API key$(NC)"; \
 	fi
 
 run:  ## Start the backend server (alias for run-backend)
 	./backend/setup_and_run.sh
 
 run-backend:  ## Start backend API server
-	@echo "Starting backend API on port $(API_PORT)..."
+	@echo -e "Starting backend API on port $(API_PORT)..."
 	cd $(BACKEND_DIR) && ./setup_and_run.sh
 
 run-frontend:  ## Start frontend dev server
-	@echo "Starting frontend dev server on port $(FRONTEND_PORT)..."
+	@echo -e "Starting frontend dev server on port $(FRONTEND_PORT)..."
 	cd $(FRONTEND_DIR) && npm run dev
 
 run-frontend-background:  ## Start frontend dev server in background
-	@echo "$(YELLOW)Starting frontend dev server in background on port $(FRONTEND_PORT)...$(NC)"
+	@echo -e "$(YELLOW)Starting frontend dev server in background on port $(FRONTEND_PORT)...$(NC)"
 	@cd $(FRONTEND_DIR) && nohup npm run dev > ../../frontend.log 2>&1 & echo $$! > ../../.frontend.pid
 	@sleep 2
 	@if [ -f .frontend.pid ] && kill -0 $$(cat .frontend.pid) 2>/dev/null; then \
-		echo "$(GREEN)✅ Frontend started in background (PID: $$(cat .frontend.pid))$(NC)"; \
-		echo "   View logs with: tail -f frontend.log"; \
-		echo "   Stop with: make stop-frontend"; \
+		echo -e "$(GREEN)✅ Frontend started in background (PID: $$(cat .frontend.pid))$(NC)"; \
+		echo -e "   View logs with: tail -f frontend.log"; \
+		echo -e "   Stop with: make stop-frontend"; \
 	else \
-		echo "$(RED)❌ Failed to start frontend$(NC)"; \
+		echo -e "$(RED)❌ Failed to start frontend$(NC)"; \
 		[ -f frontend.log ] && tail -20 frontend.log; \
 		exit 1; \
 	fi
 
 stop-frontend:  ## Stop background frontend server
 	@if [ -f .frontend.pid ]; then \
-		echo "$(YELLOW)Stopping frontend server...$(NC)"; \
+		echo -e "$(YELLOW)Stopping frontend server...$(NC)"; \
 		kill $$(cat .frontend.pid) 2>/dev/null || true; \
 		rm -f .frontend.pid; \
-		echo "$(GREEN)✅ Frontend stopped$(NC)"; \
+		echo -e "$(GREEN)✅ Frontend stopped$(NC)"; \
 	else \
-		echo "$(YELLOW)Frontend is not running in background$(NC)"; \
+		echo -e "$(YELLOW)Frontend is not running in background$(NC)"; \
 	fi
 
 check-ollama:  ## Check if Ollama is running and available
-	@echo "$(YELLOW)Checking Ollama status...$(NC)"
+	@echo -e "$(YELLOW)Checking Ollama status...$(NC)"
 	@if command -v ollama >/dev/null 2>&1; then \
 		if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
-			echo "$(GREEN)✅ Ollama is running$(NC)"; \
-			echo "   Models available:"; \
+			echo -e "$(GREEN)✅ Ollama is running$(NC)"; \
+			echo -e "   Models available:"; \
 			curl -s http://localhost:11434/api/tags | jq -r '.models[].name' 2>/dev/null | sed 's/^/   - /' || echo "   (unable to list models)"; \
 			if ! curl -s http://localhost:11434/api/tags | jq -r '.models[].name' 2>/dev/null | grep -q "$(GENERATIVE_MODEL)"; then \
-				echo "$(YELLOW)⚠️  Model $(GENERATIVE_MODEL) not found$(NC)"; \
-				echo "   Run: ollama pull $(GENERATIVE_MODEL)"; \
+				echo -e "$(YELLOW)⚠️  Model $(GENERATIVE_MODEL) not found$(NC)"; \
+				echo -e "   Run: ollama pull $(GENERATIVE_MODEL)"; \
 			fi; \
 		else \
-			echo "$(YELLOW)⚠️  Ollama is installed but not running$(NC)"; \
-			echo "   Run 'ollama serve' in another terminal, or:"; \
-			echo "   - Linux: sudo systemctl start ollama"; \
-			echo "   - macOS: ollama serve"; \
+			echo -e "$(YELLOW)⚠️  Ollama is installed but not running$(NC)"; \
+			echo -e "   Run 'ollama serve' in another terminal, or:"; \
+			echo -e "   - Linux: sudo systemctl start ollama"; \
+			echo -e "   - macOS: ollama serve"; \
 		fi \
 	else \
-		echo "$(RED)❌ Ollama is not installed$(NC)"; \
-		echo "   Visit https://ollama.ai for installation instructions"; \
+		echo -e "$(RED)❌ Ollama is not installed$(NC)"; \
+		echo -e "   Visit https://ollama.ai for installation instructions"; \
 	fi
 
 check-requirements:  ## Verify all required tools are installed (fails if missing)
-	@echo "$(YELLOW)Verifying required tools...$(NC)"
-	@command -v python3 >/dev/null 2>&1 || { echo "$(RED)❌ Python3 is required but not installed.$(NC)"; exit 1; }
-	@echo "$(GREEN)✅ Python3 found$(NC)"
-	@command -v npm >/dev/null 2>&1 || { echo "$(RED)❌ npm is required but not installed.$(NC)"; exit 1; }
-	@echo "$(GREEN)✅ npm found$(NC)"
-	@command -v docker >/dev/null 2>&1 || { echo "$(RED)❌ Docker is required but not installed.$(NC)"; exit 1; }
-	@echo "$(GREEN)✅ Docker found$(NC)"
-	@command -v docker compose version >/dev/null 2>&1 || { echo "$(RED)❌ Docker Compose is required but not installed.$(NC)"; exit 1; }
-	@echo "$(GREEN)✅ Docker Compose found$(NC)"
-	@command -v curl >/dev/null 2>&1 || { echo "$(RED)❌ curl is required but not installed.$(NC)"; exit 1; }
-	@echo "$(GREEN)✅ curl found$(NC)"
-	@command -v jq >/dev/null 2>&1 || { echo "$(YELLOW)⚠️  jq is recommended but not installed (some features may not work).$(NC)"; }
-	@echo "$(GREEN)✅ All required tools are installed!$(NC)"
+	@echo -e "$(YELLOW)Verifying required tools...$(NC)"
+	@command -v python3 >/dev/null 2>&1 || { echo -e "$(RED)❌ Python3 is required but not installed.$(NC)"; exit 1; }
+	@echo -e "$(GREEN)✅ Python3 found$(NC)"
+	@command -v npm >/dev/null 2>&1 || { echo -e "$(RED)❌ npm is required but not installed.$(NC)"; exit 1; }
+	@echo -e "$(GREEN)✅ npm found$(NC)"
+	@command -v docker >/dev/null 2>&1 || { echo -e "$(RED)❌ Docker is required but not installed.$(NC)"; exit 1; }
+	@echo -e "$(GREEN)✅ Docker found$(NC)"
+	@command -v docker compose version >/dev/null 2>&1 || { echo -e "$(RED)❌ Docker Compose is required but not installed.$(NC)"; exit 1; }
+	@echo -e "$(GREEN)✅ Docker Compose found$(NC)"
+	@command -v curl >/dev/null 2>&1 || { echo -e "$(RED)❌ curl is required but not installed.$(NC)"; exit 1; }
+	@echo -e "$(GREEN)✅ curl found$(NC)"
+	@command -v jq >/dev/null 2>&1 || { echo -e "$(YELLOW)⚠️  jq is recommended but not installed (some features may not work).$(NC)"; }
+	@echo -e "$(GREEN)✅ All required tools are installed!$(NC)"
 
 check-deps:  ## Check all dependencies and services
-	@echo "$(YELLOW)Checking system dependencies...$(NC)"
-	@echo -n "Docker: "; \
+	@echo -e "$(YELLOW)Checking system dependencies...$(NC)"
+	@echo -e -n "Docker: "; \
 	if command -v docker >/dev/null 2>&1; then \
-		echo "$(GREEN)✅ $(shell docker --version)$(NC)"; \
+		echo -e "$(GREEN)✅ $(shell docker --version)$(NC)"; \
 	else \
-		echo "$(RED)❌ Not installed$(NC)"; \
+		echo -e "$(RED)❌ Not installed$(NC)"; \
 	fi
-	@echo -n "Docker Compose: "; \
+	@echo -e -n "Docker Compose: "; \
 	if command -v docker compose >/dev/null 2>&1; then \
-		echo "$(GREEN)✅ $(shell docker compose version)$(NC)"; \
+		echo -e "$(GREEN)✅ $(shell docker compose version)$(NC)"; \
 	else \
-		echo "$(RED)❌ Not installed$(NC)"; \
+		echo -e "$(RED)❌ Not installed$(NC)"; \
 	fi
-	@echo -n "Python: "; \
+	@echo -e -n "Python: "; \
 	if command -v python3 >/dev/null 2>&1; then \
-		echo "$(GREEN)✅ $(shell python3 --version)$(NC)"; \
+		echo -e "$(GREEN)✅ $(shell python3 --version)$(NC)"; \
 	else \
-		echo "$(RED)❌ Not installed$(NC)"; \
+		echo -e "$(RED)❌ Not installed$(NC)"; \
 	fi
-	@echo -n "Node.js: "; \
+	@echo -e -n "Node.js: "; \
 	if command -v node >/dev/null 2>&1; then \
-		echo "$(GREEN)✅ $(shell node --version)$(NC)"; \
+		echo -e "$(GREEN)✅ $(shell node --version)$(NC)"; \
 	else \
-		echo "$(RED)❌ Not installed$(NC)"; \
+		echo -e "$(RED)❌ Not installed$(NC)"; \
 	fi
-	@echo -n "npm: "; \
+	@echo -e -n "npm: "; \
 	if command -v npm >/dev/null 2>&1; then \
-		echo "$(GREEN)✅ $(shell npm --version)$(NC)"; \
+		echo -e "$(GREEN)✅ $(shell npm --version)$(NC)"; \
 	else \
-		echo "$(RED)❌ Not installed$(NC)"; \
+		echo -e "$(RED)❌ Not installed$(NC)"; \
 	fi
 
 check-all:  ## Run all checks (ports, deps, ollama)
 	@$(MAKE) check-deps
-	@echo ""
+	@echo -e ""
 	@$(MAKE) check-ports
-	@echo ""
+	@echo -e ""
 	@$(MAKE) check-ollama
 
 status:  ## Show status of all services
-	@echo "$(YELLOW)Service Status:$(NC)"
-	@echo "Frontend (http://localhost:$(FRONTEND_PORT)):"
+	@echo -e "$(YELLOW)Service Status:$(NC)"
+	@echo -e "Frontend (http://localhost:$(FRONTEND_PORT)):"
 	@if curl -s http://localhost:$(FRONTEND_PORT) >/dev/null 2>&1; then \
-		echo "  $(GREEN)✅ Running$(NC)"; \
+		echo -e "  $(GREEN)✅ Running$(NC)"; \
 	else \
-		echo "  $(RED)❌ Not running$(NC)"; \
+		echo -e "  $(RED)❌ Not running$(NC)"; \
 	fi
-	@echo "Backend API (http://localhost:$(API_PORT)):"
+	@echo -e "Backend API (http://localhost:$(API_PORT)):"
 	@if curl -s http://localhost:$(API_PORT)/health >/dev/null 2>&1; then \
-		echo "  $(GREEN)✅ Running$(NC)"; \
+		echo -e "  $(GREEN)✅ Running$(NC)"; \
 		curl -s http://localhost:$(API_PORT)/health | jq -r '.status' | sed 's/^/  Status: /' 2>/dev/null || true; \
 	else \
-		echo "  $(RED)❌ Not running$(NC)"; \
+		echo -e "  $(RED)❌ Not running$(NC)"; \
 	fi
-	@echo "ChromaDB (http://localhost:$(CHROMA_GATEWAY_PORT)):"
+	@echo -e "ChromaDB (http://localhost:$(CHROMA_GATEWAY_PORT)):"
 	@if curl -s http://localhost:$(CHROMA_GATEWAY_PORT)/api/v1/heartbeat >/dev/null 2>&1; then \
-		echo "  $(GREEN)✅ Running$(NC)"; \
+		echo -e "  $(GREEN)✅ Running$(NC)"; \
 	else \
-		echo "  $(RED)❌ Not running$(NC)"; \
+		echo -e "  $(RED)❌ Not running$(NC)"; \
 	fi
-	@echo "Ollama (http://localhost:11434):"
+	@echo -e "Ollama (http://localhost:11434):"
 	@if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
-		echo "  $(GREEN)✅ Running$(NC)"; \
+		echo -e "  $(GREEN)✅ Running$(NC)"; \
 	else \
-		echo "  $(RED)❌ Not running$(NC)"; \
+		echo -e "  $(RED)❌ Not running$(NC)"; \
 	fi
-	@echo ""
-	@echo "Docker containers:"
+	@echo -e ""
+	@echo -e "Docker containers:"
 	@docker compose ps
 
 run-all:  ## Start all services (docker + frontend) - works from fresh clone
-	@echo "$(YELLOW)Preparing environment...$(NC)"
+	@echo -e "$(YELLOW)Preparing environment...$(NC)"
 	@$(MAKE) ensure-env-files
 	@if [ ! -d $(FRONTEND_DIR)/node_modules ]; then \
-		echo "$(YELLOW)Installing frontend dependencies...$(NC)"; \
+		echo -e "$(YELLOW)Installing frontend dependencies...$(NC)"; \
 		cd $(FRONTEND_DIR) && npm install; \
-		echo "$(GREEN)✅ Frontend dependencies installed$(NC)"; \
+		echo -e "$(GREEN)✅ Frontend dependencies installed$(NC)"; \
 	fi
 	@if [ ! -d $(BACKEND_DIR)/venv ]; then \
-		echo "$(YELLOW)Setting up Python virtual environment...$(NC)"; \
+		echo -e "$(YELLOW)Setting up Python virtual environment...$(NC)"; \
 		$(MAKE) setup; \
-		echo "$(GREEN)✅ Backend dependencies installed$(NC)"; \
+		echo -e "$(GREEN)✅ Backend dependencies installed$(NC)"; \
 	fi
 	@$(MAKE) check-ports
 	@$(MAKE) check-ollama
-	@echo "$(YELLOW)Starting all services...$(NC)"
+	@echo -e "$(YELLOW)Starting all services...$(NC)"
 	docker compose up -d
-	@echo ""
+	@echo -e ""
 	@$(MAKE) wait-for-chromadb
 	@$(MAKE) wait-for-backend
-	@echo ""
+	@echo -e ""
 	@$(MAKE) health-check
-	@echo ""
-	@echo "$(YELLOW)Starting frontend...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Starting frontend...$(NC)"
 	cd $(FRONTEND_DIR) && npm run dev
 
 run-all-detached:  ## Start all services in background (non-blocking)
 	@$(MAKE) check-requirements
-	@echo "$(YELLOW)Preparing environment...$(NC)"
+	@echo -e "$(YELLOW)Preparing environment...$(NC)"
 	@$(MAKE) ensure-env-files
 	@if [ ! -d $(FRONTEND_DIR)/node_modules ]; then \
-		echo "$(YELLOW)Installing frontend dependencies...$(NC)"; \
+		echo -e "$(YELLOW)Installing frontend dependencies...$(NC)"; \
 		cd $(FRONTEND_DIR) && npm install; \
-		echo "$(GREEN)✅ Frontend dependencies installed$(NC)"; \
+		echo -e "$(GREEN)✅ Frontend dependencies installed$(NC)"; \
 	fi
 	@if [ ! -d $(BACKEND_DIR)/venv ]; then \
-		echo "$(YELLOW)Setting up Python virtual environment...$(NC)"; \
+		echo -e "$(YELLOW)Setting up Python virtual environment...$(NC)"; \
 		$(MAKE) setup; \
-		echo "$(GREEN)✅ Backend dependencies installed$(NC)"; \
+		echo -e "$(GREEN)✅ Backend dependencies installed$(NC)"; \
 	fi
 	@$(MAKE) check-ports
 	@$(MAKE) check-ollama
-	@echo "$(YELLOW)Starting all services...$(NC)"
+	@echo -e "$(YELLOW)Starting all services...$(NC)"
 	docker compose up -d
-	@echo ""
+	@echo -e ""
 	@$(MAKE) wait-for-chromadb
 	@$(MAKE) wait-for-backend
-	@echo ""
+	@echo -e ""
 	@$(MAKE) health-check
-	@echo ""
+	@echo -e ""
 	@$(MAKE) run-frontend-background
-	@echo ""
-	@echo "$(GREEN)✅ All services are running!$(NC)"
-	@echo ""
-	@echo "Access points:"
-	@echo "  - Frontend: http://localhost:$(FRONTEND_PORT)"
-	@echo "  - Backend API: http://localhost:$(API_PORT)"
-	@echo "  - API Docs: http://localhost:$(API_PORT)/docs"
-	@echo ""
-	@echo "Useful commands:"
-	@echo "  - View all logs: make logs"
-	@echo "  - View frontend logs: tail -f frontend.log"
-	@echo "  - Stop all services: make stop-all"
-	@echo "  - Check status: make status"
+	@echo -e ""
+	@echo -e "$(GREEN)✅ All services are running!$(NC)"
+	@echo -e ""
+	@echo -e "Access points:"
+	@echo -e "  - Frontend: http://localhost:$(FRONTEND_PORT)"
+	@echo -e "  - Backend API: http://localhost:$(API_PORT)"
+	@echo -e "  - API Docs: http://localhost:$(API_PORT)/docs"
+	@echo -e ""
+	@echo -e "Useful commands:"
+	@echo -e "  - View all logs: make logs"
+	@echo -e "  - View frontend logs: tail -f frontend.log"
+	@echo -e "  - Stop all services: make stop-all"
+	@echo -e "  - Check status: make status"
 
 dev:  ## Start development environment (alias for run-all-detached)
 	@$(MAKE) run-all-detached
 
 run-debug:  ## Start services with debug profile (includes netshoot container)
-	@echo "$(YELLOW)Starting services with debug profile...$(NC)"
+	@echo -e "$(YELLOW)Starting services with debug profile...$(NC)"
 	@$(MAKE) ensure-env-files
 	@$(MAKE) check-ports
 	docker compose --profile debug up -d
 	@$(MAKE) wait-for-chromadb
 	@$(MAKE) wait-for-backend
-	@echo "$(GREEN)✅ Debug environment ready$(NC)"
-	@echo "Debug container: docker compose exec debug sh"
+	@echo -e "$(GREEN)✅ Debug environment ready$(NC)"
+	@echo -e "Debug container: docker compose exec debug sh"
 
 run-prod:  ## Start services with production profile
-	@echo "$(YELLOW)Starting services with production profile...$(NC)"
+	@echo -e "$(YELLOW)Starting services with production profile...$(NC)"
 	@if [ -f .env.production ]; then \
-		echo "$(GREEN)Using .env.production$(NC)"; \
+		echo -e "$(GREEN)Using .env.production$(NC)"; \
 		cp .env .env.backup 2>/dev/null || true; \
 		cp .env.production .env; \
 	else \
-		echo "$(YELLOW)⚠️  No .env.production found, using default .env$(NC)"; \
-		echo "   Create from: cp .env.production.example .env.production"; \
+		echo -e "$(YELLOW)⚠️  No .env.production found, using default .env$(NC)"; \
+		echo -e "   Create from: cp .env.production.example .env.production"; \
 	fi
 	@$(MAKE) ensure-env-files
 	@$(MAKE) check-ports
@@ -401,12 +408,12 @@ run-prod:  ## Start services with production profile
 	docker compose --profile production up -d
 	@$(MAKE) wait-for-chromadb
 	@$(MAKE) wait-for-backend
-	@echo "$(GREEN)✅ Production environment ready$(NC)"
+	@echo -e "$(GREEN)✅ Production environment ready$(NC)"
 
 run-all-with-ollama:  ## Start all services including Ollama
 	@$(MAKE) check-ports
 	@if ! curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
-		echo "$(YELLOW)Starting Ollama in background...$(NC)"; \
+		echo -e "$(YELLOW)Starting Ollama in background...$(NC)"; \
 		nohup ollama serve > ollama.log 2>&1 & \
 		echo $$! > .ollama.pid; \
 		sleep 3; \
@@ -414,37 +421,37 @@ run-all-with-ollama:  ## Start all services including Ollama
 	@$(MAKE) run-all
 
 rebuild-all:  ## Rebuild all Docker images (no cache) and start services
-	@echo "$(YELLOW)Rebuilding all services...$(NC)"
+	@echo -e "$(YELLOW)Rebuilding all services...$(NC)"
 	docker compose down
 	docker compose build --no-cache
 	@$(MAKE) run-all
 
 build-with-cache:  ## Build images with cache optimization
-	@echo "$(YELLOW)Building with cache optimization...$(NC)"
+	@echo -e "$(YELLOW)Building with cache optimization...$(NC)"
 	@mkdir -p /tmp/.buildx-cache
 	DOCKER_BUILDKIT=1 docker compose build
-	@echo "$(GREEN)✅ Build complete with cache$(NC)"
+	@echo -e "$(GREEN)✅ Build complete with cache$(NC)"
 
 dev-setup:  ## Complete development environment setup
-	@echo "$(YELLOW)Setting up development environment...$(NC)"
+	@echo -e "$(YELLOW)Setting up development environment...$(NC)"
 	@$(MAKE) check-deps
-	@echo ""
-	@echo "$(YELLOW)Installing backend dependencies...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Installing backend dependencies...$(NC)"
 	@$(MAKE) setup
-	@echo ""
-	@echo "$(YELLOW)Installing frontend dependencies...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Installing frontend dependencies...$(NC)"
 	@cd $(FRONTEND_DIR) && npm install
-	@echo ""
-	@echo "$(GREEN)✅ Development environment ready!$(NC)"
-	@echo "Run 'make run-all' to start all services"
+	@echo -e ""
+	@echo -e "$(GREEN)✅ Development environment ready!$(NC)"
+	@echo -e "Run 'make run-all' to start all services"
 
 test:  ## Run backend tests
 	./backend/run_tests.sh
 
 test-all:  ## Run all tests (backend + frontend)
-	@echo "Running backend tests..."
+	@echo -e "Running backend tests..."
 	cd backend && ./run_tests.sh
-	@echo "Running frontend linting..."
+	@echo -e "Running frontend linting..."
 	cd $(FRONTEND_DIR) && npm run lint
 
 lint:  ## Run code linting
@@ -452,144 +459,144 @@ lint:  ## Run code linting
 	./venv/bin/black --check backend/
 
 validate-setup:  ## Validate the entire setup configuration
-	@echo "$(YELLOW)Validating setup...$(NC)"
-	@echo -n "Checking .env file: "
+	@echo -e "$(YELLOW)Validating setup...$(NC)"
+	@echo -e -n "Checking .env file: "
 	@if [ -f .env ]; then \
-		echo "$(GREEN)✅ Found$(NC)"; \
+		echo -e "$(GREEN)✅ Found$(NC)"; \
 	else \
-		echo "$(RED)❌ Missing$(NC)"; \
+		echo -e "$(RED)❌ Missing$(NC)"; \
 		exit 1; \
 	fi
-	@echo -n "Checking backend Dockerfile: "
+	@echo -e -n "Checking backend Dockerfile: "
 	@if grep -q "COPY --chown=appuser:appuser \*.py \./" $(BACKEND_DIR)/Dockerfile 2>/dev/null; then \
-		echo "$(GREEN)✅ Correct$(NC)"; \
+		echo -e "$(GREEN)✅ Correct$(NC)"; \
 	else \
-		echo "$(RED)❌ Needs fix (wrong COPY path)$(NC)"; \
-		echo "   Run: make fix-dockerfile"; \
+		echo -e "$(RED)❌ Needs fix (wrong COPY path)$(NC)"; \
+		echo -e "   Run: make fix-dockerfile"; \
 	fi
-	@echo -n "Checking Docker images: "
+	@echo -e -n "Checking Docker images: "
 	@if docker images | grep -q synapse-backend; then \
-		echo "$(GREEN)✅ Built$(NC)"; \
-		echo "   Built: $$(docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.CreatedSince}}' | grep synapse-backend | head -1)"; \
+		echo -e "$(GREEN)✅ Built$(NC)"; \
+		echo -e "   Built: $$(docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.CreatedSince}}' | grep synapse-backend | head -1)"; \
 	else \
-		echo "$(YELLOW)⚠️  Not built$(NC)"; \
+		echo -e "$(YELLOW)⚠️  Not built$(NC)"; \
 	fi
-	@echo -n "Checking required models: "
+	@echo -e -n "Checking required models: "
 	@if curl -s http://localhost:11434/api/tags 2>/dev/null | jq -r '.models[].name' | grep -q "$(GENERATIVE_MODEL)"; then \
-		echo "$(GREEN)✅ $(GENERATIVE_MODEL) available$(NC)"; \
+		echo -e "$(GREEN)✅ $(GENERATIVE_MODEL) available$(NC)"; \
 	else \
-		echo "$(YELLOW)⚠️  $(GENERATIVE_MODEL) not pulled$(NC)"; \
+		echo -e "$(YELLOW)⚠️  $(GENERATIVE_MODEL) not pulled$(NC)"; \
 	fi
 
 health-check:  ## Check health of all running services
-	@echo "$(YELLOW)Checking service health...$(NC)"
-	@echo -n "Backend API: "
+	@echo -e "$(YELLOW)Checking service health...$(NC)"
+	@echo -e -n "Backend API: "
 	@if curl -s http://localhost:$(API_PORT)/health >/dev/null 2>&1; then \
 		health=$$(curl -s http://localhost:$(API_PORT)/health | jq -r '.status' 2>/dev/null); \
 		if [ "$$health" = "healthy" ]; then \
-			echo "$(GREEN)✅ Healthy$(NC)"; \
+			echo -e "$(GREEN)✅ Healthy$(NC)"; \
 		elif [ "$$health" = "degraded" ]; then \
-			echo "$(YELLOW)⚠️  Degraded$(NC)"; \
+			echo -e "$(YELLOW)⚠️  Degraded$(NC)"; \
 			curl -s http://localhost:$(API_PORT)/health | jq '.dependencies' 2>/dev/null | sed 's/^/  /' || true; \
 		else \
-			echo "$(RED)❌ Unhealthy$(NC)"; \
+			echo -e "$(RED)❌ Unhealthy$(NC)"; \
 		fi \
 	else \
-		echo "$(RED)❌ Not responding$(NC)"; \
+		echo -e "$(RED)❌ Not responding$(NC)"; \
 	fi
-	@echo -n "ChromaDB: "
+	@echo -e -n "ChromaDB: "
 	@if curl -s http://localhost:$(CHROMA_GATEWAY_PORT)/api/v1/heartbeat >/dev/null 2>&1; then \
-		echo "$(GREEN)✅ Healthy$(NC)"; \
+		echo -e "$(GREEN)✅ Healthy$(NC)"; \
 	else \
-		echo "$(RED)❌ Not responding$(NC)"; \
+		echo -e "$(RED)❌ Not responding$(NC)"; \
 	fi
 
 docker-shell:  ## Open a shell in the backend container
-	@echo "$(YELLOW)Opening shell in backend container...$(NC)"
+	@echo -e "$(YELLOW)Opening shell in backend container...$(NC)"
 	docker compose exec backend /bin/bash
 
 pull-models:  ## Pull required Ollama models
-	@echo "$(YELLOW)Pulling required models...$(NC)"
+	@echo -e "$(YELLOW)Pulling required models...$(NC)"
 	@if command -v ollama >/dev/null 2>&1; then \
-		echo "Pulling $(GENERATIVE_MODEL)..."; \
+		echo -e "Pulling $(GENERATIVE_MODEL)..."; \
 		ollama pull $(GENERATIVE_MODEL); \
-		echo "Pulling mxbai-embed-large..."; \
+		echo -e "Pulling mxbai-embed-large..."; \
 		ollama pull mxbai-embed-large; \
-		echo "$(GREEN)✅ Models pulled successfully$(NC)"; \
+		echo -e "$(GREEN)✅ Models pulled successfully$(NC)"; \
 	else \
-		echo "$(RED)❌ Ollama not installed$(NC)"; \
+		echo -e "$(RED)❌ Ollama not installed$(NC)"; \
 	fi
 
 fix-dockerfile:  ## Fix the Dockerfile COPY path issue
-	@echo "$(YELLOW)Fixing Dockerfile...$(NC)"
+	@echo -e "$(YELLOW)Fixing Dockerfile...$(NC)"
 	@cp $(BACKEND_DIR)/Dockerfile $(BACKEND_DIR)/Dockerfile.bak
 	@$(SED_INPLACE) 's/COPY --chown=appuser:appuser \*.py backend\//COPY --chown=appuser:appuser *.py .\//g' $(BACKEND_DIR)/Dockerfile
-	@echo "$(GREEN)✅ Dockerfile fixed$(NC)"
-	@echo "   Backup saved to $(BACKEND_DIR)/Dockerfile.bak"
-	@echo "   Run 'make rebuild-all' to rebuild with the fix"
+	@echo -e "$(GREEN)✅ Dockerfile fixed$(NC)"
+	@echo -e "   Backup saved to $(BACKEND_DIR)/Dockerfile.bak"
+	@echo -e "   Run 'make rebuild-all' to rebuild with the fix"
 
 wait-for-backend:  ## Wait for backend to be healthy
-	@echo "$(YELLOW)Waiting for backend to be healthy...$(NC)"
+	@echo -e "$(YELLOW)Waiting for backend to be healthy...$(NC)"
 	@timeout=30; \
-	counter=0; \
+	start_time=$$SECONDS; \
 	while ! curl -f -s http://localhost:$(API_PORT)/health >/dev/null 2>&1; do \
-		counter=$$((counter + 1)); \
-		if [ $$counter -ge $$timeout ]; then \
-			echo ""; \
-			echo "$(RED)❌ Backend failed to become healthy after $$timeout seconds$(NC)"; \
-			echo "Check logs with: make logs-backend"; \
+		elapsed=$$((SECONDS - start_time)); \
+		if [ $$elapsed -ge $$timeout ]; then \
+			echo -e ""; \
+			echo -e "$(RED)❌ Backend failed to become healthy after $$timeout seconds$(NC)"; \
+			echo -e "Check logs with: make logs-backend"; \
 			exit 1; \
 		fi; \
-		echo -n "."; \
+		echo -e -n "."; \
 		sleep 1; \
 	done; \
-	echo ""; \
-	echo "$(GREEN)✅ Backend is healthy!$(NC)"
+	echo -e ""; \
+	echo -e "$(GREEN)✅ Backend is healthy!$(NC)"
 
 wait-for-chromadb:  ## Wait for ChromaDB to be ready
-	@echo "$(YELLOW)Waiting for ChromaDB to be ready...$(NC)"
+	@echo -e "$(YELLOW)Waiting for ChromaDB to be ready...$(NC)"
 	@timeout=30; \
-	counter=0; \
+	start_time=$$SECONDS; \
 	while ! curl -f -s http://localhost:$(CHROMA_GATEWAY_PORT)/api/v1 >/dev/null 2>&1; do \
-		counter=$$((counter + 1)); \
-		if [ $$counter -ge $$timeout ]; then \
-			echo ""; \
-			echo "$(RED)❌ ChromaDB failed to become ready after $$timeout seconds$(NC)"; \
-			echo "Check logs with: make logs-chromadb"; \
+		elapsed=$$((SECONDS - start_time)); \
+		if [ $$elapsed -ge $$timeout ]; then \
+			echo -e ""; \
+			echo -e "$(RED)❌ ChromaDB failed to become ready after $$timeout seconds$(NC)"; \
+			echo -e "Check logs with: make logs-chromadb"; \
 			exit 1; \
 		fi; \
-		echo -n "."; \
+		echo -e -n "."; \
 		sleep 1; \
 	done; \
-	echo ""; \
-	echo "$(GREEN)✅ ChromaDB is ready!$(NC)"
+	echo -e ""; \
+	echo -e "$(GREEN)✅ ChromaDB is ready!$(NC)"
 
 stop-all:  ## Stop all docker services
-	@echo "$(YELLOW)Stopping all services...$(NC)"
+	@echo -e "$(YELLOW)Stopping all services...$(NC)"
 	docker compose down
 	@if [ -f .frontend.pid ]; then \
-		echo "Stopping frontend..."; \
+		echo -e "Stopping frontend..."; \
 		kill $$(cat .frontend.pid) 2>/dev/null || true; \
 		rm -f .frontend.pid; \
 	fi
 	@if [ -f .ollama.pid ]; then \
-		echo "Stopping Ollama..."; \
+		echo -e "Stopping Ollama..."; \
 		kill $$(cat .ollama.pid) 2>/dev/null || true; \
 		rm -f .ollama.pid; \
 	fi
-	@echo "$(GREEN)✅ All services stopped$(NC)"
+	@echo -e "$(GREEN)✅ All services stopped$(NC)"
 
 logs:  ## View docker logs
 	docker compose logs -f
 
 check-ports:  ## Check if required ports are available
-	@echo "Checking port availability..."
+	@echo -e "Checking port availability..."
 	@for port in $(FRONTEND_PORT) $(API_PORT) $(CHROMA_GATEWAY_PORT); do \
 		if lsof -i :$$port >/dev/null 2>&1; then \
-			echo "⚠️  Port $$port is already in use!"; \
+			echo -e "⚠️  Port $$port is already in use!"; \
 			lsof -i :$$port | grep LISTEN; \
 		else \
-			echo "✅ Port $$port is available"; \
+			echo -e "✅ Port $$port is available"; \
 		fi \
 	done
 
@@ -603,67 +610,67 @@ logs-ollama:  ## View Ollama logs (if started via make)
 	@if [ -f ollama.log ]; then \
 		tail -f ollama.log; \
 	else \
-		echo "$(YELLOW)No Ollama log file found. Ollama may be running as a system service.$(NC)"; \
-		echo "Try: journalctl -u ollama -f"; \
+		echo -e "$(YELLOW)No Ollama log file found. Ollama may be running as a system service.$(NC)"; \
+		echo -e "Try: journalctl -u ollama -f"; \
 	fi
 
 restart:  ## Restart specific service (usage: make restart service=backend)
 	@if [ -z "$(service)" ]; then \
-		echo "$(RED)Error: Please specify a service$(NC)"; \
-		echo "Usage: make restart service=backend"; \
-		echo "Available services: backend, chromadb"; \
+		echo -e "$(RED)Error: Please specify a service$(NC)"; \
+		echo -e "Usage: make restart service=backend"; \
+		echo -e "Available services: backend, chromadb"; \
 	else \
-		echo "$(YELLOW)Restarting $(service)...$(NC)"; \
+		echo -e "$(YELLOW)Restarting $(service)...$(NC)"; \
 		docker compose restart $(service); \
-		echo "$(GREEN)✅ $(service) restarted$(NC)"; \
+		echo -e "$(GREEN)✅ $(service) restarted$(NC)"; \
 	fi
 
 ingest-test:  ## Test document ingestion
-	@echo "$(YELLOW)Testing document ingestion...$(NC)"
+	@echo -e "$(YELLOW)Testing document ingestion...$(NC)"
 	@curl -X POST http://localhost:$(API_PORT)/api/documents \
 		-H "Content-Type: application/json" \
 		-H "X-API-KEY: test-api-key-123" \
 		-d '{"title": "Test Document", "content": "This is a test document for ingestion.", "source": "test"}' \
-		2>/dev/null | jq . || echo "$(RED)❌ Ingestion failed$(NC)"
+		2>/dev/null | jq . || echo -e "$(RED)❌ Ingestion failed$(NC)"
 
 query-test:  ## Test RAG query
-	@echo "$(YELLOW)Testing RAG query...$(NC)"
+	@echo -e "$(YELLOW)Testing RAG query...$(NC)"
 	@curl -X POST http://localhost:$(API_PORT)/api/chat \
 		-H "Content-Type: application/json" \
 		-H "X-API-KEY: test-api-key-123" \
 		-d '{"message": "What is a test document?", "max_context_documents": 5}' \
-		2>/dev/null | jq . || echo "$(RED)❌ Query failed$(NC)"
+		2>/dev/null | jq . || echo -e "$(RED)❌ Query failed$(NC)"
 
 backup-data:  ## Backup SQLite database and ChromaDB data
-	@echo "$(YELLOW)Backing up data...$(NC)"
+	@echo -e "$(YELLOW)Backing up data...$(NC)"
 	@BACKUP_DIR="backups/$$(date +%Y%m%d_%H%M%S)"; \
 	mkdir -p "$$BACKUP_DIR"; \
-	if [ -f $(BACKEND_DIR)/capture.db ]; then \
-		cp $(BACKEND_DIR)/capture.db "$$BACKUP_DIR/"; \
-		echo "$(GREEN)✅ SQLite database backed up$(NC)"; \
+	if [ -f "$(BACKEND_DIR)/capture.db" ]; then \
+		cp "$(BACKEND_DIR)/capture.db" "$$BACKUP_DIR/"; \
+		echo -e "$(GREEN)✅ SQLite database backed up$(NC)"; \
 	else \
-		echo "$(YELLOW)⚠️  No SQLite database found$(NC)"; \
+		echo -e "$(YELLOW)⚠️  No SQLite database found$(NC)"; \
 	fi; \
 	if [ -d chromadb_data ]; then \
 		cp -r chromadb_data "$$BACKUP_DIR/"; \
-		echo "$(GREEN)✅ ChromaDB data backed up$(NC)"; \
+		echo -e "$(GREEN)✅ ChromaDB data backed up$(NC)"; \
 	else \
-		echo "$(YELLOW)⚠️  No ChromaDB data found$(NC)"; \
+		echo -e "$(YELLOW)⚠️  No ChromaDB data found$(NC)"; \
 	fi; \
-	echo "$(GREEN)Backup saved to: $$BACKUP_DIR/$(NC)"
+	echo -e "$(GREEN)Backup saved to: $$BACKUP_DIR/$(NC)"
 
 restore-data:  ## Restore SQLite database and ChromaDB data from backup
-	@echo "$(YELLOW)Available backups:$(NC)"
+	@echo -e "$(YELLOW)Available backups:$(NC)"
 	@if [ -d backups ]; then \
-		ls -1dt backups/*/ 2>/dev/null | head -10 | nl -v 1 || echo "$(RED)No backups found$(NC)"; \
+		ls -1dt backups/*/ 2>/dev/null | head -10 | nl -v 1 || echo -e "$(RED)No backups found$(NC)"; \
 	else \
-		echo "$(RED)No backups directory found$(NC)"; \
+		echo -e "$(RED)No backups directory found$(NC)"; \
 		exit 1; \
 	fi
-	@echo ""
+	@echo -e ""
 	@read -p "Enter backup number to restore (or full path): " backup_choice; \
 	if [ -z "$$backup_choice" ]; then \
-		echo "$(RED)❌ No backup selected$(NC)"; \
+		echo -e "$(RED)❌ No backup selected$(NC)"; \
 		exit 1; \
 	fi; \
 	if [ -d "$$backup_choice" ]; then \
@@ -672,171 +679,171 @@ restore-data:  ## Restore SQLite database and ChromaDB data from backup
 		BACKUP_PATH=$$(ls -1dt backups/*/ 2>/dev/null | sed -n "$${backup_choice}p"); \
 	fi; \
 	if [ -z "$$BACKUP_PATH" ] || [ ! -d "$$BACKUP_PATH" ]; then \
-		echo "$(RED)❌ Invalid backup selection$(NC)"; \
+		echo -e "$(RED)❌ Invalid backup selection$(NC)"; \
 		exit 1; \
 	fi; \
-	echo "$(YELLOW)Restoring from: $$BACKUP_PATH$(NC)"; \
-	echo "$(RED)WARNING: This will overwrite existing data!$(NC)"; \
+	echo -e "$(YELLOW)Restoring from: $$BACKUP_PATH$(NC)"; \
+	echo -e "$(RED)WARNING: This will overwrite existing data!$(NC)"; \
 	read -p "Continue? (y/N): " confirm; \
 	if [ "$$confirm" != "y" ] && [ "$$confirm" != "Y" ]; then \
-		echo "$(YELLOW)Restore cancelled$(NC)"; \
+		echo -e "$(YELLOW)Restore cancelled$(NC)"; \
 		exit 0; \
 	fi; \
 	if [ -f "$$BACKUP_PATH/capture.db" ]; then \
 		cp "$$BACKUP_PATH/capture.db" $(BACKEND_DIR)/capture.db; \
-		echo "$(GREEN)✅ SQLite database restored$(NC)"; \
+		echo -e "$(GREEN)✅ SQLite database restored$(NC)"; \
 	else \
-		echo "$(YELLOW)⚠️  No SQLite database in backup$(NC)"; \
+		echo -e "$(YELLOW)⚠️  No SQLite database in backup$(NC)"; \
 	fi; \
 	if [ -d "$$BACKUP_PATH/chromadb_data" ]; then \
 		rm -rf chromadb_data; \
 		cp -r "$$BACKUP_PATH/chromadb_data" chromadb_data; \
-		echo "$(GREEN)✅ ChromaDB data restored$(NC)"; \
+		echo -e "$(GREEN)✅ ChromaDB data restored$(NC)"; \
 	else \
-		echo "$(YELLOW)⚠️  No ChromaDB data in backup$(NC)"; \
+		echo -e "$(YELLOW)⚠️  No ChromaDB data in backup$(NC)"; \
 	fi; \
-	echo "$(GREEN)✅ Restore complete from: $$BACKUP_PATH$(NC)"; \
-	echo "$(YELLOW)Note: Restart services with 'make stop-all && make dev' to use restored data$(NC)"
+	echo -e "$(GREEN)✅ Restore complete from: $$BACKUP_PATH$(NC)"; \
+	echo -e "$(YELLOW)Note: Restart services with 'make stop-all && make dev' to use restored data$(NC)"
 
 monitor:  ## Live monitoring dashboard (requires watch command)
 	@if command -v watch >/dev/null 2>&1; then \
 		watch -n 2 -c "make status"; \
 	else \
-		echo "$(RED)❌ 'watch' command not found$(NC)"; \
-		echo "Install with: sudo apt-get install watch (Linux) or brew install watch (macOS)"; \
+		echo -e "$(RED)❌ 'watch' command not found$(NC)"; \
+		echo -e "Install with: sudo apt-get install watch (Linux) or brew install watch (macOS)"; \
 	fi
 
 docs:  ## Show comprehensive documentation
-	@echo "$(YELLOW)📚 Capture-v3 Makefile Documentation$(NC)"
-	@echo ""
-	@echo "$(GREEN)=== Quick Start ===$(NC)"
-	@echo "For new users, run these commands in order:"
-	@echo "  1. $(YELLOW)make init$(NC)         - Initialize project from fresh clone"
-	@echo "  2. $(YELLOW)make dev$(NC)          - Start all services in background"
-	@echo "  3. $(YELLOW)make status$(NC)       - Check if everything is running"
-	@echo ""
-	@echo "$(GREEN)=== Common Workflows ===$(NC)"
-	@echo ""
-	@echo "$(YELLOW)Development:$(NC)"
-	@echo "  make dev             - Start all services in background (recommended)"
-	@echo "  make stop-all        - Stop all services"
-	@echo "  make logs            - View all logs"
-	@echo "  make status          - Check service health"
-	@echo ""
-	@echo "$(YELLOW)Troubleshooting:$(NC)"
-	@echo "  make troubleshoot    - Interactive troubleshooting guide"
-	@echo "  make check-deps      - Verify all dependencies"
-	@echo "  make check-ports     - Check if ports are available"
-	@echo "  make health-check    - Detailed health status"
-	@echo ""
-	@echo "$(YELLOW)Data Management:$(NC)"
-	@echo "  make backup-data     - Backup SQLite and ChromaDB data"
-	@echo "  make restore-data    - Restore from backup"
-	@echo ""
-	@echo "$(GREEN)=== Service Ports ===$(NC)"
-	@echo "  Frontend:     http://localhost:$(FRONTEND_PORT)"
-	@echo "  Backend API:  http://localhost:$(API_PORT)"
-	@echo "  API Docs:     http://localhost:$(API_PORT)/docs"
-	@echo "  ChromaDB:     http://localhost:$(CHROMA_GATEWAY_PORT)"
-	@echo ""
-	@echo "$(GREEN)=== Environment Files ===$(NC)"
-	@echo "  Root .env:                    Main configuration (ports, API keys)"
-	@echo "  $(FRONTEND_DIR)/.env.local:    Frontend config (backend URL, API key)"
-	@echo "  $(BACKEND_DIR)/.env.development:  Backend config (models, DB paths)"
-	@echo ""
-	@echo "$(GREEN)=== Docker Services ===$(NC)"
-	@echo "  backend:  FastAPI application with Haystack RAG"
-	@echo "  chromadb: Vector database for embeddings"
-	@echo ""
-	@echo "$(GREEN)=== Advanced Features ===$(NC)"
-	@echo "  make rebuild-all     - Force rebuild all Docker images"
-	@echo "  make docker-shell    - Open shell in backend container"
-	@echo "  make pull-models     - Download Ollama models"
-	@echo "  make monitor         - Live monitoring dashboard"
-	@echo ""
-	@echo "For all available commands: $(YELLOW)make help$(NC)"
+	@echo -e "$(YELLOW)📚 Capture-v3 Makefile Documentation$(NC)"
+	@echo -e ""
+	@echo -e "$(GREEN)=== Quick Start ===$(NC)"
+	@echo -e "For new users, run these commands in order:"
+	@echo -e "  1. $(YELLOW)make init$(NC)         - Initialize project from fresh clone"
+	@echo -e "  2. $(YELLOW)make dev$(NC)          - Start all services in background"
+	@echo -e "  3. $(YELLOW)make status$(NC)       - Check if everything is running"
+	@echo -e ""
+	@echo -e "$(GREEN)=== Common Workflows ===$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Development:$(NC)"
+	@echo -e "  make dev             - Start all services in background (recommended)"
+	@echo -e "  make stop-all        - Stop all services"
+	@echo -e "  make logs            - View all logs"
+	@echo -e "  make status          - Check service health"
+	@echo -e ""
+	@echo -e "$(YELLOW)Troubleshooting:$(NC)"
+	@echo -e "  make troubleshoot    - Interactive troubleshooting guide"
+	@echo -e "  make check-deps      - Verify all dependencies"
+	@echo -e "  make check-ports     - Check if ports are available"
+	@echo -e "  make health-check    - Detailed health status"
+	@echo -e ""
+	@echo -e "$(YELLOW)Data Management:$(NC)"
+	@echo -e "  make backup-data     - Backup SQLite and ChromaDB data"
+	@echo -e "  make restore-data    - Restore from backup"
+	@echo -e ""
+	@echo -e "$(GREEN)=== Service Ports ===$(NC)"
+	@echo -e "  Frontend:     http://localhost:$(FRONTEND_PORT)"
+	@echo -e "  Backend API:  http://localhost:$(API_PORT)"
+	@echo -e "  API Docs:     http://localhost:$(API_PORT)/docs"
+	@echo -e "  ChromaDB:     http://localhost:$(CHROMA_GATEWAY_PORT)"
+	@echo -e ""
+	@echo -e "$(GREEN)=== Environment Files ===$(NC)"
+	@echo -e "  Root .env:                    Main configuration (ports, API keys)"
+	@echo -e "  $(FRONTEND_DIR)/.env.local:    Frontend config (backend URL, API key)"
+	@echo -e "  $(BACKEND_DIR)/.env.development:  Backend config (models, DB paths)"
+	@echo -e ""
+	@echo -e "$(GREEN)=== Docker Services ===$(NC)"
+	@echo -e "  backend:  FastAPI application with Haystack RAG"
+	@echo -e "  chromadb: Vector database for embeddings"
+	@echo -e ""
+	@echo -e "$(GREEN)=== Advanced Features ===$(NC)"
+	@echo -e "  make rebuild-all     - Force rebuild all Docker images"
+	@echo -e "  make docker-shell    - Open shell in backend container"
+	@echo -e "  make pull-models     - Download Ollama models"
+	@echo -e "  make monitor         - Live monitoring dashboard"
+	@echo -e ""
+	@echo -e "For all available commands: $(YELLOW)make help$(NC)"
 
 security-check:  ## Run security checks and recommendations
-	@echo "$(YELLOW)🔒 Security Check$(NC)"
-	@echo ""
-	@echo "$(YELLOW)Checking environment files...$(NC)"
+	@echo -e "$(YELLOW)🔒 Security Check$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Checking environment files...$(NC)"
 	@if [ -f .env ] && grep -q "your-secret-api-key-here\|test-api-key-123" .env; then \
-		echo "$(RED)⚠️  WARNING: Default API key detected in .env$(NC)"; \
-		echo "   Generate secure key: openssl rand -hex 32"; \
+		echo -e "$(RED)⚠️  WARNING: Default API key detected in .env$(NC)"; \
+		echo -e "   Generate secure key: openssl rand -hex 32"; \
 	else \
-		echo "$(GREEN)✅ No default API keys in .env$(NC)"; \
+		echo -e "$(GREEN)✅ No default API keys in .env$(NC)"; \
 	fi
 	@if [ -f $(FRONTEND_DIR)/.env.local ] && grep -q "your-secret-api-key-here\|test-api-key-123" $(FRONTEND_DIR)/.env.local; then \
-		echo "$(RED)⚠️  WARNING: Default API key in frontend .env.local$(NC)"; \
+		echo -e "$(RED)⚠️  WARNING: Default API key in frontend .env.local$(NC)"; \
 	else \
-		echo "$(GREEN)✅ No default API keys in frontend config$(NC)"; \
+		echo -e "$(GREEN)✅ No default API keys in frontend config$(NC)"; \
 	fi
-	@echo ""
-	@echo "$(YELLOW)Checking ChromaDB settings...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Checking ChromaDB settings...$(NC)"
 	@if [ -f .env ] && grep -q "CHROMADB_ALLOW_RESET=TRUE" .env; then \
-		echo "$(YELLOW)⚠️  ChromaDB ALLOW_RESET is TRUE$(NC)"; \
-		echo "   Set to FALSE for production environments"; \
+		echo -e "$(YELLOW)⚠️  ChromaDB ALLOW_RESET is TRUE$(NC)"; \
+		echo -e "   Set to FALSE for production environments"; \
 	else \
-		echo "$(GREEN)✅ ChromaDB ALLOW_RESET is secure$(NC)"; \
+		echo -e "$(GREEN)✅ ChromaDB ALLOW_RESET is secure$(NC)"; \
 	fi
-	@echo ""
-	@echo "$(YELLOW)Checking Git security...$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Checking Git security...$(NC)"
 	@if git ls-files --error-unmatch .env >/dev/null 2>&1; then \
-		echo "$(RED)⚠️  WARNING: .env is tracked in Git!$(NC)"; \
-		echo "   Run: git rm --cached .env"; \
+		echo -e "$(RED)⚠️  WARNING: .env is tracked in Git!$(NC)"; \
+		echo -e "   Run: git rm --cached .env"; \
 	else \
-		echo "$(GREEN)✅ .env is not tracked in Git$(NC)"; \
+		echo -e "$(GREEN)✅ .env is not tracked in Git$(NC)"; \
 	fi
 	@if git ls-files --error-unmatch $(FRONTEND_DIR)/.env.local >/dev/null 2>&1; then \
-		echo "$(RED)⚠️  WARNING: frontend .env.local is tracked in Git!$(NC)"; \
+		echo -e "$(RED)⚠️  WARNING: frontend .env.local is tracked in Git!$(NC)"; \
 	else \
-		echo "$(GREEN)✅ Frontend .env.local is not tracked$(NC)"; \
+		echo -e "$(GREEN)✅ Frontend .env.local is not tracked$(NC)"; \
 	fi
-	@echo ""
-	@echo "$(YELLOW)Recommendations:$(NC)"
-	@echo "  1. Use environment-specific .env files (.env.production)"
-	@echo "  2. Rotate API keys regularly"
-	@echo "  3. Use Docker secrets for sensitive data in production"
-	@echo "  4. Enable HTTPS for production deployments"
-	@echo "  5. Review docker-compose resource limits"
-	@echo ""
-	@echo "$(GREEN)Security check complete$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Recommendations:$(NC)"
+	@echo -e "  1. Use environment-specific .env files (.env.production)"
+	@echo -e "  2. Rotate API keys regularly"
+	@echo -e "  3. Use Docker secrets for sensitive data in production"
+	@echo -e "  4. Enable HTTPS for production deployments"
+	@echo -e "  5. Review docker-compose resource limits"
+	@echo -e ""
+	@echo -e "$(GREEN)Security check complete$(NC)"
 
 debug-env:  ## Show all environment variables
-	@echo "$(YELLOW)Environment Configuration:$(NC)"
-	@echo "Frontend Port: $(FRONTEND_PORT)"
-	@echo "API Port: $(API_PORT)"
-	@echo "ChromaDB Port: $(CHROMA_GATEWAY_PORT)"
-	@echo "API Container Port: $(API_CONTAINER_PORT)"
-	@echo "Generative Model: $(GENERATIVE_MODEL)"
-	@echo ""
-	@echo "$(YELLOW)Backend Environment:$(NC)"
+	@echo -e "$(YELLOW)Environment Configuration:$(NC)"
+	@echo -e "Frontend Port: $(FRONTEND_PORT)"
+	@echo -e "API Port: $(API_PORT)"
+	@echo -e "ChromaDB Port: $(CHROMA_GATEWAY_PORT)"
+	@echo -e "API Container Port: $(API_CONTAINER_PORT)"
+	@echo -e "Generative Model: $(GENERATIVE_MODEL)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Backend Environment:$(NC)"
 	@cat backend/.env.development | grep -v '^#' | grep -v '^$$' | sed 's/^/  /'
 
 troubleshoot:  ## Interactive troubleshooting guide
-	@echo "$(YELLOW)Troubleshooting Guide$(NC)"
-	@echo ""
-	@echo "1. If backend won't start:"
-	@echo "   - Check Dockerfile: make validate-setup"
-	@echo "   - Fix if needed: make fix-dockerfile"
-	@echo "   - Rebuild: make rebuild-all"
-	@echo ""
-	@echo "2. If imports fail:"
-	@echo "   - Shell into container: make docker-shell"
-	@echo "   - Check files: ls -la /app/"
-	@echo "   - Test imports: python -c 'import main'"
-	@echo ""
-	@echo "3. If Ollama issues:"
-	@echo "   - Check status: make check-ollama"
-	@echo "   - Pull models: make pull-models"
-	@echo "   - Start with app: make run-all-with-ollama"
-	@echo ""
-	@echo "4. View logs:"
-	@echo "   - All: make logs"
-	@echo "   - Backend only: make logs-backend"
-	@echo "   - ChromaDB only: make logs-chromadb"
-	@echo ""
-	@echo "Run 'make status' to see current system state"
+	@echo -e "$(YELLOW)Troubleshooting Guide$(NC)"
+	@echo -e ""
+	@echo -e "1. If backend won't start:"
+	@echo -e "   - Check Dockerfile: make validate-setup"
+	@echo -e "   - Fix if needed: make fix-dockerfile"
+	@echo -e "   - Rebuild: make rebuild-all"
+	@echo -e ""
+	@echo -e "2. If imports fail:"
+	@echo -e "   - Shell into container: make docker-shell"
+	@echo -e "   - Check files: ls -la /app/"
+	@echo -e "   - Test imports: python -c 'import main'"
+	@echo -e ""
+	@echo -e "3. If Ollama issues:"
+	@echo -e "   - Check status: make check-ollama"
+	@echo -e "   - Pull models: make pull-models"
+	@echo -e "   - Start with app: make run-all-with-ollama"
+	@echo -e ""
+	@echo -e "4. View logs:"
+	@echo -e "   - All: make logs"
+	@echo -e "   - Backend only: make logs-backend"
+	@echo -e "   - ChromaDB only: make logs-chromadb"
+	@echo -e ""
+	@echo -e "Run 'make status' to see current system state"
 
 clean:  ## Clean cache and temporary files
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
@@ -846,26 +853,26 @@ clean:  ## Clean cache and temporary files
 	find . -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
 	rm -f .ollama.pid ollama.log .frontend.pid frontend.log venv/.deps-installed
-	@echo "$(GREEN)✅ Cleaned temporary files$(NC)"
+	@echo -e "$(GREEN)✅ Cleaned temporary files$(NC)"
 
 clean-docker:  ## Remove Docker images and volumes (CAUTION: deletes data)
-	@echo "$(RED)WARNING: This will delete all data!$(NC)"
-	@echo "Press Ctrl+C to cancel, or wait 5 seconds to continue..."
+	@echo -e "$(RED)WARNING: This will delete all data!$(NC)"
+	@echo -e "Press Ctrl+C to cancel, or wait 5 seconds to continue..."
 	@sleep 5
 	docker compose down -v --rmi all
-	@echo "$(GREEN)✅ Docker cleanup complete$(NC)"
+	@echo -e "$(GREEN)✅ Docker cleanup complete$(NC)"
 
 coffee:  ## Essential developer fuel ☕
-	@echo "    ( ("
-	@echo "     ) )"
-	@echo "  ........."
-	@echo "  |       |]"
-	@echo "  \       /"
-	@echo "   \`-----'"
-	@echo ""
-	@echo "☕ Brewing virtual coffee..."
+	@echo -e "$(YELLOW)    ( ("
+	@echo -e "     ) )"
+	@echo -e "  ........."
+	@echo -e "  |       |]"
+	@echo -e "  \       /"
+	@echo -e "   \`-----'$(NC)"
+	@echo -e ""
+	@echo -e "☕ Brewing virtual coffee..."
 	@sleep 2
-	@echo "✅ Coffee ready! Now get back to coding!"
-	@echo ""
-	@echo "Fun fact: This codebase was built on approximately 127 cups of coffee."
-	@echo "Your contribution will increase this counter."
+	@echo -e "$(GREEN)✅ Coffee ready! Now get back to coding!$(NC)"
+	@echo -e ""
+	@echo -e "Fun fact: This codebase was built on approximately 127 cups of coffee."
+	@echo -e "Your contribution will increase this counter."
