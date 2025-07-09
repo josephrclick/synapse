@@ -26,7 +26,7 @@ services:
       chromadb:
         condition: service_healthy
     networks:
-      - capture-network
+      - synapse-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -59,7 +59,7 @@ services:
       - IS_PERSISTENT=TRUE
       - ALLOW_RESET=${CHROMADB_ALLOW_RESET:-TRUE}  # Set to FALSE in production
     networks:
-      - capture-network
+      - synapse-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1"]
@@ -83,7 +83,7 @@ services:
       - debug
     command: tail -f /dev/null
     networks:
-      - capture-network
+      - synapse-network
     depends_on:
       - backend
       - chromadb
@@ -92,5 +92,5 @@ volumes:
   chroma_data:
 
 networks:
-  capture-network:
+  synapse-network:
     driver: bridge

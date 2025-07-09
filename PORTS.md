@@ -1,4 +1,4 @@
-# Port Allocation for Capture-v3
+# Port Allocation for Synapse
 
 ## Port Range: 8100-8199
 

@@ -36,7 +36,7 @@ else
 endif
 
 # Path definitions to avoid duplication
-FRONTEND_DIR := frontend/capture-v3
+FRONTEND_DIR := frontend/synapse
 BACKEND_DIR := backend
 
 # Load environment variables
@@ -92,7 +92,7 @@ init:  ## First time setup for fresh clone (creates configs and installs deps)
 	@$(MAKE) setup
 	@echo ""
 	@echo "$(YELLOW)3/5: Installing frontend dependencies...$(NC)"
-	@cd frontend/capture-v3 && npm install
+	@cd frontend/synapse && npm install
 	@echo ""
 	@echo "$(YELLOW)4/5: Checking Docker setup...$(NC)"
 	@$(MAKE) validate-setup
@@ -433,7 +433,7 @@ dev-setup:  ## Complete development environment setup
 	@$(MAKE) setup
 	@echo ""
 	@echo "$(YELLOW)Installing frontend dependencies...$(NC)"
-	@cd frontend/capture-v3 && npm install
+	@cd frontend/synapse && npm install
 	@echo ""
 	@echo "$(GREEN)✅ Development environment ready!$(NC)"
 	@echo "Run 'make run-all' to start all services"
@@ -445,7 +445,7 @@ test-all:  ## Run all tests (backend + frontend)
 	@echo "Running backend tests..."
 	cd backend && ./run_tests.sh
 	@echo "Running frontend linting..."
-	cd frontend/capture-v3 && npm run lint
+	cd frontend/synapse && npm run lint
 
 lint:  ## Run code linting
 	./venv/bin/ruff check backend/
@@ -468,9 +468,9 @@ validate-setup:  ## Validate the entire setup configuration
 		echo "   Run: make fix-dockerfile"; \
 	fi
 	@echo -n "Checking Docker images: "
-	@if docker images | grep -q capture-v3-backend; then \
+	@if docker images | grep -q synapse-backend; then \
 		echo "$(GREEN)✅ Built$(NC)"; \
-		echo "   Built: $$(docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.CreatedSince}}' | grep capture-v3-backend | head -1)"; \
+		echo "   Built: $$(docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.CreatedSince}}' | grep synapse-backend | head -1)"; \
 	else \
 		echo "$(YELLOW)⚠️  Not built$(NC)"; \
 	fi
