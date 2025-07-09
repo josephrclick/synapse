@@ -35,9 +35,11 @@ Synapse is a private, local-first knowledge management system with:
 
 ### All Services (Recommended)
 ```bash
+make init               # First-time setup (creates .env files)
 make run-all            # Start Docker services + frontend dev server
 make check-ports        # Verify ports are available
 make stop-all           # Stop all Docker services
+make logs               # View Docker logs
 ```
 
 ### Backend Only
@@ -84,9 +86,10 @@ NEXT_PUBLIC_DEEPGRAM_API_KEY=your-deepgram-api-key-here
 ### Backend Structure
 - `main.py` - FastAPI app with all endpoints
 - `pipelines.py` - Haystack RAG pipeline setup
-- `database.py` - SQLite operations
+- `database.py` / `database_async.py` - SQLite operations (sync/async)
 - `config.py` - Settings management (Pydantic v2)
 - `schemas.py` - Request/response models
+- **Database**: Now uses `synapse.db` (not capture.db)
 
 ### Frontend Structure
 - `app/page.tsx` - Home page with chat interface
@@ -115,9 +118,9 @@ NEXT_PUBLIC_DEEPGRAM_API_KEY=your-deepgram-api-key-here
 ## Common Tasks
 
 ### Change AI Model
-Edit `backend/.env.development`:
+Edit `backend/.env`:
 ```
-GENERATIVE_MODEL=gemma3n:e2b
+GENERATIVE_MODEL=gemma3n:e4b
 ```
 
 ### Fix Missing Dependencies
@@ -129,14 +132,15 @@ pip install -r requirements.txt
 ### Debug RAG Pipeline
 Check logs for request IDs - all operations are correlated.
 
-## Phase 3 Priorities
+## Next Priorities
 
 1. Document management UI (view, edit, delete)
 2. Advanced search with filters
 3. Tag management and filtering
 4. Export functionality
-5. Audio ingestion with Deepgram
+5. Audio ingestion with Deepgram (PoC complete)
 6. Streaming chat responses
+7. Multi-user support
 
 ## MCP Tools to Use
 
@@ -159,6 +163,8 @@ Check logs for request IDs - all operations are correlated.
   - Push-to-talk using pointer events
   - 250ms MediaRecorder chunks for low latency
   - Browser compatibility: Chrome, Edge, Firefox (no Safari)
+- **Database**: SQLite database is now `synapse.db` (was capture.db)
+- **Git**: Database files (*.db) are gitignored for privacy
 
 ## Ollama Performance
 

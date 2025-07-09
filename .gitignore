@@ -19,5 +19,5 @@ jupyter-notebooks/
 .cursor/
 .claude/
 docs/reference/private/
-synapse.*
-capture.db
+synapse.db
+backups/

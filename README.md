@@ -19,7 +19,7 @@ It's the ultimate "I told you so" machine, and you're telling yourself.
 ## The "Magic" (It's Not Magic, It's RAG)
 
 1.  **You Feed the Beast:** Drop in any text document.
-2.  **It Chews on It:** Capture uses advanced models to chunk and create vector embeddings (think of them as "idea-fingerprints").
+2.  **It Chews on It:** Synapse uses advanced models to chunk and create vector embeddings (think of them as "idea-fingerprints").
 3.  **You Ask a Question:** "What were the security concerns from that one frontend report?"
 4.  **It Thinks:** It finds the most relevant "idea-fingerprints," reads the original text, and uses a powerful local LLM to generate a human-like answer.
 5.  **You Look Like a Genius:** You get a perfect summary, complete with links to the exact sources you fed it.
@@ -56,7 +56,7 @@ Feeling brave? Want to run this glorious beast?
 git clone https://github.com/yourusername/synapse.git
 cd synapse
 make init        # First time? Start here!
-make dev         # Start everything in background
+make run-all     # Start everything (Docker + frontend)
 ```
 
 That's it. Seriously. The Makefile handles everything:
@@ -69,18 +69,18 @@ That's it. Seriously. The Makefile handles everything:
 ### 🎯 Common Commands
 
 ```bash
-make dev         # Start all services in background (recommended)
-make status      # Check if everything is running
-make logs        # View all logs
-make stop-all    # Stop when done
+make run-all     # Start all services (recommended)
+make check-ports # Verify ports are available
+make logs        # View Docker logs
+make stop-all    # Stop all Docker services
 make help        # Show all available commands
 ```
 
-### 🔐 Security First
+### 🔐 Testing & Quality
 
 ```bash
-make security-check  # Run security audit
-make run-prod       # Start with production settings
+# Backend testing
+cd backend && ./run_tests.sh  # Run test suite
 ```
 
 Wait for the Docker containers to spin up and the matrix to load. Pro tip: If you see ASCII art, you're doing it right.
@@ -97,25 +97,30 @@ Wait for the Docker containers to spin up and the matrix to load. Pro tip: If yo
 
 Everything important is in the root `.env` file. The Makefile will create one for you with sensible defaults. Want to get fancy? Check out `.env.production.example` for hardened settings.
 
-### 🧪 Advanced Features
+### 🧪 Development Commands
 
 ```bash
-make docs           # Comprehensive documentation
-make backup-data    # Backup your knowledge
-make restore-data   # Time travel your database
-make run-debug      # Debug mode with network tools
-make monitor        # Live dashboard (if you like watching numbers)
+# Frontend commands
+cd frontend/synapse
+npm run dev      # Development server
+npm run build    # Production build
+npm run lint     # Run ESLint
+
+# Backend commands
+cd backend
+./setup_and_run.sh  # Full setup and run
+pip install -r requirements.txt  # Install deps in venv
 ```
 
-### 🐰 The Konami Code
+### 🔧 Configuration
 
-If you're reading this far, you deserve a treat. Try this:
+Port configuration is centralized in the root `.env` file:
 
 ```bash
-make troubleshoot
-# When asked "What's the issue?", type: ↑↑↓↓←→←→BA
-# Just kidding, that doesn't work. But wouldn't it be cool if it did?
-# The real easter egg is that 'make help | grep -i coffee' might surprise you.
+# Application Ports (Host-side)
+FRONTEND_PORT=8100
+API_PORT=8101
+CHROMA_GATEWAY_PORT=8102
 ```
 
 ### The Roadmap
