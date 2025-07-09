@@ -5,7 +5,7 @@
 To verify pytest is working without needing all backend dependencies:
 
 ```bash
-cd /home/joe/dev/projects/capture-v3/backend
+cd /home/joe/dev/projects/synapse/backend
 # Temporarily move conftest to avoid import errors
 mv tests/conftest.py tests/conftest.py.tmp
 # Run the minimal test
@@ -19,8 +19,8 @@ mv tests/conftest.py.tmp tests/conftest.py
 ### Option 1: Using Existing Virtual Environment
 
 ```bash
-# From the capture-v3 directory
-cd /home/joe/dev/projects/capture-v3
+# From the synapse directory
+cd /home/joe/dev/projects/synapse
 source venv/bin/activate
 
 # Verify you're in venv (should show venv path)
@@ -37,7 +37,7 @@ pytest tests/test_flow.py -v -s
 ### Option 2: Start Fresh in Backend Directory
 
 ```bash
-cd /home/joe/dev/projects/capture-v3/backend
+cd /home/joe/dev/projects/synapse/backend
 
 # Create new venv
 python -m venv test_venv

@@ -1,5 +1,5 @@
 """
-Async repository pattern implementation for Capture-v3 backend.
+Async repository pattern implementation for Synapse backend.
 
 This module contains async repository classes that use the databases library
 for non-blocking database operations with connection pooling.

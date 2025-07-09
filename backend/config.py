@@ -7,7 +7,7 @@ from pathlib import Path
 
 class Settings(BaseSettings):
     """
-    Configuration settings for Capture-v3 Engine.
+    Configuration settings for Synapse Engine.
     Loads from environment variables or .env file.
     
     Environment-specific configs can be loaded by setting ENVIRONMENT variable:
@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     chroma_collection_name: str = Field(default="knowledge_base", description="ChromaDB collection name")
     
     # SQLite Configuration
-    sqlite_db_path: str = Field(default="./capture.db", description="SQLite database path")
+    sqlite_db_path: str = Field(default="./synapse.db", description="SQLite database path")
     
     # Chunking Configuration
     chunk_split_by: str = Field(default="sentence", description="How to split documents")
@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     chunk_split_overlap: int = Field(default=2, description="Overlap between chunks")
     
     # Application Settings
-    app_name: str = Field(default="Capture-v3 Engine", description="Application name")
+    app_name: str = Field(default="Synapse Engine", description="Application name")
     environment: str = Field(default="development", description="Environment (development/production)")
     log_level: str = Field(default="INFO", description="Logging level")
     max_content_size: int = Field(default=1_000_000, description="Maximum document content size in bytes (default 1MB)")

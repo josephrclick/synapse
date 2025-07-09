@@ -1,5 +1,5 @@
 """
-Debug-focused test suite for the Capture-v3 API.
+Debug-focused test suite for the Synapse API.
 Tests document ingestion with async processing and chat functionality.
 Uses clear visual markers to show data flow and help with debugging.
 """

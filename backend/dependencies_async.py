@@ -1,5 +1,5 @@
 """
-Async dependency injection configuration for Capture-v3 backend.
+Async dependency injection configuration for Synapse backend.
 
 This module contains async dependency functions used by FastAPI's dependency
 injection system when async database mode is enabled.

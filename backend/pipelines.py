@@ -1,6 +1,6 @@
 """
 RAG Pipeline Implementation using Haystack v2.
-Provides indexing and querying pipelines for the Capture-v3 system.
+Provides indexing and querying pipelines for the Synapse system.
 """
 import uuid
 import logging

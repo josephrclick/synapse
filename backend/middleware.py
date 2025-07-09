@@ -1,5 +1,5 @@
 """
-Request middleware for the Capture-v3 backend.
+Request middleware for the Synapse backend.
 """
 import uuid
 import time

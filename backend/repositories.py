@@ -1,5 +1,5 @@
 """
-Repository pattern implementation for Capture-v3 backend.
+Repository pattern implementation for Synapse backend.
 
 This module contains repository classes that abstract data access logic,
 providing a clean separation between the API layer and database implementation.

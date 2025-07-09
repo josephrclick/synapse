@@ -1,5 +1,5 @@
 """
-Background tasks module for Capture-v3.
+Background tasks module for Synapse.
 
 This module contains background processing logic that runs asynchronously
 after API endpoints return responses to clients. It's designed to decouple

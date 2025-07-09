@@ -1,4 +1,4 @@
-# Capture-v3 Backend
+# Synapse Backend
 
 FastAPI-based backend service providing document ingestion and RAG-powered search capabilities.
 

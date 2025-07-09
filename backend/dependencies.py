@@ -1,5 +1,5 @@
 """
-Dependency injection configuration for Capture-v3 backend.
+Dependency injection configuration for Synapse backend.
 
 This module contains dependency functions used by FastAPI's dependency
 injection system to provide properly configured instances to endpoints.

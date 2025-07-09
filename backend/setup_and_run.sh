@@ -11,7 +11,7 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
-echo "Setting up Capture-v3 Backend..."
+echo "Setting up Synapse Backend..."
 
 # Change to project root
 SCRIPT_DIR=$(cd "$(dirname "$0")" && pwd)
@@ -114,7 +114,7 @@ if [ ! -f ".env" ]; then
         
         cat > .env << EOF
 # Application Settings
-APP_NAME="Capture-v3 Backend"
+APP_NAME="Synapse Backend"
 ENVIRONMENT=development
 LOG_LEVEL=INFO
 

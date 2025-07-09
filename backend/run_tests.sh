@@ -1,7 +1,7 @@
 #!/bin/bash
 # Quick test runner script
 
-echo "Running Capture-v3 Backend Tests..."
+echo "Running Synapse Backend Tests..."
 echo "=================================="
 
 # Get the script directory and repo root first

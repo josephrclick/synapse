@@ -1,5 +1,5 @@
 """
-Minimal pytest fixtures for testing the Capture-v3 API.
+Minimal pytest fixtures for testing the Synapse API.
 Provides TestClient and API headers for all tests.
 """
 import os

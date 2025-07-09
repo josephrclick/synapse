@@ -4,7 +4,7 @@
 
 1. **Ensure dependencies are installed:**
    ```bash
-   cd /home/joe/dev/projects/capture-v3
+   cd /home/joe/dev/projects/synapse
    source venv/bin/activate
    cd backend
    pip install -r requirements.txt
@@ -14,14 +14,14 @@
 2. **Start the backend server:**
    ```bash
    # In one terminal
-   cd /home/joe/dev/projects/capture-v3/backend
+   cd /home/joe/dev/projects/synapse/backend
    python start_server.py
    ```
 
 3. **Run the new pytest suite:**
    ```bash
    # In another terminal
-   cd /home/joe/dev/projects/capture-v3
+   cd /home/joe/dev/projects/synapse
    source venv/bin/activate
    cd backend
    pytest tests/test_flow.py -v -s
