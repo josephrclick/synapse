@@ -4,7 +4,7 @@ __pycache__/
 node_modules/
 # Environment files
 .env
-.env.*
+.env.
 !.env.example
 *.env
 frontend/**/.env.local
