@@ -145,6 +145,10 @@ fresh-start:  ## Complete fresh start (clean + init + run)
 setup:  ## Setup virtual environment and install dependencies
 	@if [ ! -d "venv" ] || [ "$(BACKEND_DIR)/requirements.txt" -nt "venv/.deps-installed" ] || [ "$(BACKEND_DIR)/requirements-dev.txt" -nt "venv/.deps-installed" ]; then \
 		echo -e "$(YELLOW)Setting up Python environment...$(NC)"; \
+		if [ -d "venv" ]; then \
+			echo -e "$(YELLOW)Clearing existing virtual environment...$(NC)"; \
+			rm -rf venv; \
+		fi; \
 		python3 -m venv venv; \
 		./venv/bin/pip install --upgrade pip; \
 		echo -e "$(YELLOW)Installing production dependencies...$(NC)"; \
@@ -335,7 +339,7 @@ run-all:  ## Start all services (docker + frontend) - works from fresh clone
 		cd $(FRONTEND_DIR) && npm install; \
 		echo -e "$(GREEN)✅ Frontend dependencies installed$(NC)"; \
 	fi
-	@if [ ! -d $(BACKEND_DIR)/venv ]; then \
+	@if [ ! -d venv ]; then \
 		echo -e "$(YELLOW)Setting up Python virtual environment...$(NC)"; \
 		$(MAKE) setup; \
 		echo -e "$(GREEN)✅ Backend dependencies installed$(NC)"; \
@@ -362,7 +366,7 @@ run-all-detached:  ## Start all services in background (non-blocking)
 		cd $(FRONTEND_DIR) && npm install; \
 		echo -e "$(GREEN)✅ Frontend dependencies installed$(NC)"; \
 	fi
-	@if [ ! -d $(BACKEND_DIR)/venv ]; then \
+	@if [ ! -d venv ]; then \
 		echo -e "$(YELLOW)Setting up Python virtual environment...$(NC)"; \
 		$(MAKE) setup; \
 		echo -e "$(GREEN)✅ Backend dependencies installed$(NC)"; \
