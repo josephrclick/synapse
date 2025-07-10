@@ -1,4 +1,4 @@
-# Capture-v3 Backend Dependencies
+# Synapse Backend Dependencies
 # This file specifies the direct dependencies with version constraints.
 # To update the locked requirements.txt file, run:
 #   pip-compile backend/requirements.in -o backend/requirements.txt

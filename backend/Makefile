@@ -1,4 +1,4 @@
-# Makefile for Capture-v3 Backend Dependency Management
+# Makefile for Synapse Backend Dependency Management
 
 .PHONY: help compile upgrade upgrade-package install clean
 

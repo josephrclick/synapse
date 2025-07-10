@@ -757,7 +757,7 @@ monitor:  ## Live monitoring dashboard (requires watch command)
 	fi
 
 docs:  ## Show comprehensive documentation
-	@echo -e "$(YELLOW)📚 Capture-v3 Makefile Documentation$(NC)"
+	@echo -e "$(YELLOW)📚 Synapse Makefile Documentation$(NC)"
 	@echo -e ""
 	@echo -e "$(GREEN)=== Quick Start ===$(NC)"
 	@echo -e "For new users, run these commands in order:"
