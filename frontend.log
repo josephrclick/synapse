@@ -1,0 +1,44 @@
+
+> synapse@0.1.0 dev
+> PORT=${FRONTEND_PORT:-8100} next dev --turbopack
+
+   ▲ Next.js 15.3.5 (Turbopack)
+   - Local:        http://localhost:8100
+   - Network:      http://192.168.0.30:8100
+   - Environments: .env.local, .env
+
+ ✓ Starting...
+ ✓ Ready in 773ms
+ ○ Compiling / ...
+ ✓ Compiled / in 1703ms
+ GET / 200 in 2019ms
+ ○ Compiling /_not-found/page ...
+ ✓ Compiled /_not-found/page in 614ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 669ms
+ ○ Compiling /ingest ...
+ ✓ Compiled /ingest in 659ms
+ GET /ingest 200 in 698ms
+Backend URL: http://localhost:8101
+ POST /ingest 200 in 49ms
+ GET / 200 in 57ms
+ ✓ Compiled /api/chat in 437ms
+Backend URL: http://localhost:8101
+API Key configured: Yes
+Backend response status: 500
+Backend response headers: {
+  'content-length': '60',
+  'content-type': 'application/json',
+  date: 'Thu, 10 Jul 2025 03:54:07 GMT',
+  server: 'uvicorn',
+  'x-request-id': '347ed0ab-c826-4d0d-a65c-fd8184ab0ebe'
+}
+Backend error response: {"detail":"Failed to process chat query. Please try again."}
+ POST /api/chat 500 in 120788ms
+ GET / 200 in 49ms
+ GET / 200 in 47ms
+ GET / 200 in 57ms
+ GET / 200 in 48ms
+ GET / 200 in 49ms
+ GET / 200 in 43ms
+ GET / 200 in 54ms
+ GET / 200 in 53ms

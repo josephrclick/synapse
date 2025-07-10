@@ -12,14 +12,15 @@ services:
       - ./backend:/app
     env_file:
       - .env
+      - ./backend/.env
     environment:
       - PYTHONUNBUFFERED=1
-      # Updated to use containerized Ollama
-      - OLLAMA_BASE_URL=http://ollama:11434
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       chromadb:
-        condition: service_healthy
-      ollama:
         condition: service_healthy
     networks:
       - synapse-network
@@ -40,7 +41,7 @@ services:
           memory: 512M
 
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.5.23
     profiles:
       - ""  # Default profile (always active)
       - development
@@ -72,37 +73,6 @@ services:
           cpus: '0.25'
           memory: 256M
 
-  # NEW: Containerized Ollama service
-  ollama:
-    image: ollama/ollama:latest
-    profiles:
-      - ""  # Default profile (always active)
-      - development
-      - production
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    environment:
-      - OLLAMA_HOST=0.0.0.0:11434
-    networks:
-      - synapse-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "ollama", "list"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-    deploy:
-      resources:
-        limits:
-          cpus: '4'
-          memory: 4G
-        reservations:
-          cpus: '1'
-          memory: 1G
-
   # Debug service for troubleshooting
   debug:
     image: nicolaka/netshoot:latest
@@ -114,11 +84,9 @@ services:
     depends_on:
       - backend
       - chromadb
-      - ollama
 
 volumes:
   chroma_data:
-  ollama_data:  # NEW: Persistent storage for Ollama models
 
 networks:
   synapse-network:

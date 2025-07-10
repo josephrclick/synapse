@@ -49,7 +49,7 @@ RUN mkdir -p backend
 
 # Copy only the backend application code
 COPY --chown=appuser:appuser *.py ./
-COPY --chown=appuser:appuser pytest.ini setup_and_run.sh run_tests.sh ./
+COPY --chown=appuser:appuser setup_and_run.sh ./
 
 # Set environment variables
 ENV PYTHONPATH=/app

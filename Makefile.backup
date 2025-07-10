@@ -192,26 +192,15 @@ run-frontend:  ## Start frontend dev server
 run-frontend-background:  ## Start frontend dev server in background
 	@echo -e "$(YELLOW)Starting frontend dev server in background on port $(FRONTEND_PORT)...$(NC)"
 	@cd $(FRONTEND_DIR) && nohup npm run dev > ../../frontend.log 2>&1 & echo $$! > ../../.frontend.pid
-	@echo -e "$(YELLOW)Waiting for frontend to start...$(NC)"
-	@timeout=30; \
-	start_time=$$SECONDS; \
-	while ! curl -s http://localhost:$(FRONTEND_PORT) >/dev/null 2>&1; do \
-		elapsed=$$((SECONDS - start_time)); \
-		if [ $$elapsed -ge $$timeout ]; then \
-			echo -e ""; \
-			echo -e "$(RED)❌ Frontend failed to start after $$timeout seconds$(NC)"; \
-			[ -f frontend.log ] && tail -20 frontend.log; \
-			exit 1; \
-		fi; \
-		echo -e -n "."; \
-		sleep 1; \
-	done; \
-	echo -e ""; \
-	echo -e "$(GREEN)✅ Frontend started successfully on port $(FRONTEND_PORT)$(NC)"; \
-	echo -e "   View logs with: tail -f frontend.log"; \
-	echo -e "   Stop with: make stop-frontend"; \
-	@if [ -f .frontend.pid ]; then \
-		echo -e "   Process info: PID $$(cat .frontend.pid)"; \
+	@sleep 2
+	@if [ -f .frontend.pid ] && kill -0 $$(cat .frontend.pid) 2>/dev/null; then \
+		echo -e "$(GREEN)✅ Frontend started in background (PID: $$(cat .frontend.pid))$(NC)"; \
+		echo -e "   View logs with: tail -f frontend.log"; \
+		echo -e "   Stop with: make stop-frontend"; \
+	else \
+		echo -e "$(RED)❌ Failed to start frontend$(NC)"; \
+		[ -f frontend.log ] && tail -20 frontend.log; \
+		exit 1; \
 	fi
 
 stop-frontend:  ## Stop background frontend server
@@ -224,38 +213,28 @@ stop-frontend:  ## Stop background frontend server
 		echo -e "$(YELLOW)Frontend is not running in background$(NC)"; \
 	fi
 
-check-ollama:  ## Check if Ollama is running (host or container)
+check-ollama:  ## Check if Ollama is running and available
 	@echo -e "$(YELLOW)Checking Ollama status...$(NC)"
-	@container_running=false; \
-	host_running=false; \
-	if docker compose ps ollama 2>/dev/null | grep -q "running"; then \
-		container_running=true; \
-		echo -e "$(GREEN)✅ Ollama container is running$(NC)"; \
+	@if command -v ollama >/dev/null 2>&1; then \
 		if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
-			echo -e "$(GREEN)✅ Ollama API is accessible on port 11434$(NC)"; \
+			echo -e "$(GREEN)✅ Ollama is running$(NC)"; \
 			echo -e "   Models available:"; \
 			curl -s http://localhost:11434/api/tags | jq -r '.models[].name' 2>/dev/null | sed 's/^/   - /' || echo "   (unable to list models)"; \
+			if ! curl -s http://localhost:11434/api/tags | jq -r '.models[].name' 2>/dev/null | grep -q "$(GENERATIVE_MODEL)"; then \
+				echo -e "$(YELLOW)⚠️  Model $(GENERATIVE_MODEL) not found$(NC)"; \
+				echo -e "   Run: ollama pull $(GENERATIVE_MODEL)"; \
+			fi; \
+			if ! curl -s http://0.0.0.0:11434/api/tags >/dev/null 2>&1; then \
+				echo -e "$(YELLOW)⚠️  WARNING: Ollama is only listening on localhost$(NC)"; \
+				echo -e "   Docker containers cannot reach it!"; \
+				echo -e "   Restart Ollama with: OLLAMA_HOST=0.0.0.0:11434 ollama serve"; \
+			fi; \
 		else \
-			echo -e "$(RED)❌ Ollama container running but API not accessible$(NC)"; \
-		fi; \
-	elif curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
-		host_running=true; \
-		echo -e "$(GREEN)✅ Ollama is running on host$(NC)"; \
-		echo -e "   Models available:"; \
-		curl -s http://localhost:11434/api/tags | jq -r '.models[].name' 2>/dev/null | sed 's/^/   - /' || echo "   (unable to list models)"; \
-		if ! curl -s http://0.0.0.0:11434/api/tags >/dev/null 2>&1; then \
-			echo -e "$(YELLOW)⚠️  WARNING: Ollama only listening on localhost$(NC)"; \
-			echo -e "   Docker containers cannot reach it!"; \
-			echo -e "   Fix: OLLAMA_HOST=0.0.0.0:11434 ollama serve"; \
-		fi; \
-	else \
-		echo -e "$(RED)❌ Ollama not running$(NC)"; \
-		echo -e ""; \
-		echo -e "$(YELLOW)Options to start Ollama:$(NC)"; \
-		echo -e "  1. Containerized (recommended): make setup-ollama-container"; \
-		echo -e "  2. Host-based: make start-ollama"; \
-		echo -e "  3. Manual: OLLAMA_HOST=0.0.0.0:11434 ollama serve"; \
-	fi \
+			echo -e "$(YELLOW)⚠️  Ollama is installed but not running$(NC)"; \
+			echo -e "   Run with proper binding for Docker:"; \
+			echo -e "   $(YELLOW)OLLAMA_HOST=0.0.0.0:11434 ollama serve$(NC)"; \
+			echo -e "   "; \
+			echo -e "   Or configure systemd (Linux):"; \
 			echo -e "   sudo mkdir -p /etc/systemd/system/ollama.service.d"; \
 			echo -e "   echo '[Service]' | sudo tee /etc/systemd/system/ollama.service.d/override.conf"; \
 			echo -e "   echo 'Environment=\"OLLAMA_HOST=0.0.0.0:11434\"' | sudo tee -a /etc/systemd/system/ollama.service.d/override.conf"; \
@@ -342,11 +321,9 @@ status:  ## Show status of all services
 	else \
 		echo -e "  $(RED)❌ Not running$(NC)"; \
 	fi
-	@echo -e "Ollama:"
-	@if docker compose ps ollama 2>/dev/null | grep -q "running"; then \
-		echo -e "  $(GREEN)✅ Running (containerized)$(NC)"; \
-	elif curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
-		echo -e "  $(GREEN)✅ Running (host-based)$(NC)"; \
+	@echo -e "Ollama (http://localhost:11434):"
+	@if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
+		echo -e "  $(GREEN)✅ Running$(NC)"; \
 	else \
 		echo -e "  $(RED)❌ Not running$(NC)"; \
 	fi
@@ -368,11 +345,11 @@ run-all:  ## Start all services (docker + frontend) - works from fresh clone
 		echo -e "$(GREEN)✅ Backend dependencies installed$(NC)"; \
 	fi
 	@$(MAKE) check-ports
-	@echo -e "$(YELLOW)Starting Docker services...$(NC)"
-	docker compose up -d backend chromadb ollama
+	@$(MAKE) check-ollama
+	@echo -e "$(YELLOW)Starting all services...$(NC)"
+	docker compose up -d
 	@echo -e ""
 	@$(MAKE) wait-for-chromadb
-	@$(MAKE) wait-for-ollama
 	@$(MAKE) wait-for-backend
 	@echo -e ""
 	@$(MAKE) health-check
@@ -395,11 +372,11 @@ run-all-detached:  ## Start all services in background (non-blocking)
 		echo -e "$(GREEN)✅ Backend dependencies installed$(NC)"; \
 	fi
 	@$(MAKE) check-ports
+	@$(MAKE) check-ollama
 	@echo -e "$(YELLOW)Starting all services...$(NC)"
 	docker compose up -d
 	@echo -e ""
 	@$(MAKE) wait-for-chromadb
-	@$(MAKE) wait-for-ollama
 	@$(MAKE) wait-for-backend
 	@echo -e ""
 	@$(MAKE) health-check
@@ -950,52 +927,3 @@ coffee:  ## Essential developer fuel ☕
 	@echo -e ""
 	@echo -e "Fun fact: This codebase was built on approximately 127 cups of coffee."
 	@echo -e "Your contribution will increase this counter."
-setup-ollama-container:  ## Pull models into containerized Ollama
-	@echo -e "$(YELLOW)Setting up containerized Ollama...$(NC)"
-	@if \! docker compose ps ollama  < /dev/null |  grep -q "running"; then \
-		echo -e "$(YELLOW)Starting Ollama container...$(NC)"; \
-		docker compose up -d ollama; \
-		echo -e "$(YELLOW)Waiting for Ollama to be ready...$(NC)"; \
-		timeout=60; \
-		start_time=$$SECONDS; \
-		while ! curl -s http://localhost:11434/api/tags >/dev/null 2>&1; do \
-			elapsed=$$((SECONDS - start_time)); \
-			if [ $$elapsed -ge $$timeout ]; then \
-				echo -e ""; \
-				echo -e "$(RED)❌ Ollama failed to start after $$timeout seconds$(NC)"; \
-				docker compose logs ollama; \
-				exit 1; \
-			fi; \
-			echo -e -n "."; \
-			sleep 2; \
-		done; \
-		echo -e ""; \
-		echo -e "$(GREEN)✅ Ollama container is ready$(NC)"; \
-	fi
-	@echo -e "$(YELLOW)Pulling required models...$(NC)"
-	@echo -e "Pulling $(GENERATIVE_MODEL)..."
-	@docker compose exec ollama ollama pull $(GENERATIVE_MODEL)
-	@echo -e "Pulling mxbai-embed-large..."
-	@docker compose exec ollama ollama pull mxbai-embed-large
-	@echo -e "$(GREEN)✅ Models pulled successfully$(NC)"
-
-wait-for-ollama:  ## Wait for Ollama to be ready
-	@echo -e "$(YELLOW)Waiting for Ollama to be ready...$(NC)"
-	@timeout=60; \
-	start_time=$$SECONDS; \
-	while ! curl -f -s http://localhost:11434/api/tags >/dev/null 2>&1; do \
-		elapsed=$$((SECONDS - start_time)); \
-		if [ $$elapsed -ge $$timeout ]; then \
-			echo -e ""; \
-			echo -e "$(YELLOW)⚠️  Ollama not ready after $$timeout seconds$(NC)"; \
-			echo -e "   System will continue with degraded functionality"; \
-			echo -e "   Check logs with: make logs-ollama"; \
-			break; \
-		fi; \
-		echo -e -n "."; \
-		sleep 2; \
-	done; \
-	if curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then \
-		echo -e ""; \
-		echo -e "$(GREEN)✅ Ollama is ready!$(NC)"; \
-	fi

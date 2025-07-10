@@ -1,5 +1,5 @@
-# Synapse Backend Dependencies
-# This file specifies the direct dependencies with version constraints.
+# Synapse Backend Dependencies - Updated for 2025 Best Practices
+# This file specifies the direct dependencies with compatible version constraints.
 # To update the locked requirements.txt file, run:
 #   pip-compile backend/requirements.in -o backend/requirements.txt
 #
@@ -9,17 +9,33 @@
 # To upgrade a specific package:
 #   pip-compile --upgrade-package <package-name> backend/requirements.in -o backend/requirements.txt
 
-pydantic==2.5.3
-pydantic-settings==2.1.0
-python-dotenv==1.0.0
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-haystack-ai>=2.0,<3.0
-ollama-haystack>=0.3.0
-chroma-haystack>=0.3.0
-httpx>=0.27.0
-python-multipart==0.0.6
+# Core API Framework (allow minor updates for security/performance)
+fastapi>=0.115.0,<1.0.0
+uvicorn[standard]>=0.32.0,<1.0.0
 
-# Async database support
+# Data Validation (major update needed - test carefully!)
+# NOTE: Upgrading from 2.5.3 -> 2.11.x - test thoroughly for breaking changes
+pydantic>=2.11.0,<3.0.0
+pydantic-settings>=2.1.0,<3.0.0
+
+# Environment & Configuration (very stable)
+python-dotenv>=1.0.0
+
+# HTTP Client (stable API)
+httpx>=0.27.0
+
+# File Upload Support (simple utility)
+python-multipart>=0.0.6
+
+# AI/ML Pipeline Components (using current working versions)
+# NOTE: ollama-haystack and chroma-haystack had major version jumps
+haystack-ai>=2.0,<3.0
+ollama-haystack>=1.1.0,<4.0.0    # Currently 1.1.0, allow to 3.x
+chroma-haystack>=3.3.0,<4.0.0    # Currently 3.3.0, allow patches
+
+# Database Support (stable)
 databases[aiosqlite]>=0.8.0
 aiosqlite>=0.20.0
+
+# Text Processing (new addition - was missing)
+nltk>=3.9.1

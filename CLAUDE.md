@@ -4,171 +4,167 @@ This file provides guidance to Claude Code when working with this codebase.
 
 ## Project Overview
 
-Synapse is a private, local-first knowledge management system with:
+Synapse is a private, local-first knowledge management system:
 - **Frontend**: Next.js 15 with dark mode UI and chat interface
 - **Backend**: Python 3.11/FastAPI with Haystack RAG  
-- **LLM**: Ollama (host OS) - currently using gemma3n:e4b
+- **LLM**: Ollama (containerized) - default model configurable
 - **Storage**: SQLite (documents) + ChromaDB (vectors)
+- **Containers**: Everything runs in Docker (Ollama, ChromaDB, Backend API)
 
-## Current State (Phase 2 Complete ✅)
+## Essential Commands
 
-### Phase 1 ✅
-- Backend API fully functional with all endpoints
-- Frontend can ingest documents and displays status
-- RAG pipeline operational for document search
-- Test suite passing with good coverage
-- Dark mode UI implemented
-
-### Phase 2 ✅
-- Chat interface with real-time querying
-- Source citations with expandable details
-- Context limit controls (1-20 documents)
-- Loading states and error handling
-- CORS configuration for frontend-backend communication
-- Fixed Ollama parameter deprecation warnings
-- **Security**: XSS protection with DOMPurify for AI responses
-- **Performance**: Virtual scrolling for chat messages using react-virtuoso
-- **Port Configuration**: Centralized in root .env (8100-8199 range)
-- **Voice PoC**: Push-to-talk transcription with Deepgram SDK (interview prep)
-
-## Quick Commands
-
-### All Services (Recommended)
+### Most Common
 ```bash
 make init               # First-time setup (creates .env files)
-make run-all            # Start Docker services + frontend dev server
-make check-ports        # Verify ports are available
-make stop-all           # Stop all Docker services
+make run-all            # Start everything (Docker + frontend)
+make stop-all           # Stop all services
 make logs               # View Docker logs
+make status             # Check what's running
 ```
 
-### Backend Only
+### Testing
 ```bash
-cd backend
-./setup_and_run.sh      # Full setup and run (uses API_CONTAINER_PORT)
-./run_tests.sh          # Run test suite
-pip install -r requirements.txt  # Install deps in venv
+./tests/test-all.sh     # Run comprehensive test suite
+./tests/test-backend-api.sh  # Quick API tests
 ```
 
-### Frontend Only
+### Debugging
 ```bash
-cd frontend/synapse
-npm run dev             # Development server (http://localhost:8100)
-npm run build           # Production build
-npm run lint            # Run ESLint
+make logs-backend       # Backend logs only
+make logs-chromadb      # ChromaDB logs only
+make logs-ollama        # Ollama logs only
+docker compose ps       # Check container health
 ```
 
-### Environment Setup
+## Key Files to Know
 
-#### Root `.env` (centralized port configuration):
-```bash
-# Application Ports (Host-side)
-FRONTEND_PORT=8100
-API_PORT=8101
-CHROMA_GATEWAY_PORT=8102
-
-# Container Ports (Internal)
-API_CONTAINER_PORT=8000
-CHROMA_CONTAINER_PORT=8000
-```
-
-#### Frontend `.env.local`:
-```bash
-NEXT_PUBLIC_BACKEND_URL=http://localhost:8101
-NEXT_PUBLIC_BACKEND_API_KEY=test-api-key-123
-
-# Deepgram Voice PoC (NOT FOR PRODUCTION!)
-NEXT_PUBLIC_DEEPGRAM_API_KEY=your-deepgram-api-key-here
-```
-
-## Key Files & Patterns
-
-### Backend Structure
+### Backend (`/backend`)
 - `main.py` - FastAPI app with all endpoints
 - `pipelines.py` - Haystack RAG pipeline setup
-- `database.py` / `database_async.py` - SQLite operations (sync/async)
+- `database_async.py` - SQLite operations (async)
 - `config.py` - Settings management (Pydantic v2)
 - `schemas.py` - Request/response models
-- **Database**: Now uses `synapse.db` (not capture.db)
+- `docker-entrypoint.sh` - Container startup script
 
-### Frontend Structure
-- `app/page.tsx` - Home page with chat interface
-- `app/ingest/` - Document ingestion form
-- `app/globals.css` - Dark mode styles
+### Frontend (`/frontend/synapse`)
+- `app/page.tsx` - Chat interface
+- `app/ingest/page.tsx` - Document ingestion
 - `app/components/chat/` - Chat UI components
-- `app/components/voice/` - Voice transcription components (PoC)
+- `app/lib/chat-service.ts` - Backend API client
 - `app/lib/chat-reducer.ts` - State management
-- `app/lib/chat-service.ts` - API communication
-- `app/types/chat.ts` - TypeScript interfaces
+
+### Configuration
+- `.env` - Root configuration (ports)
+- `docker-compose.yml` - Container orchestration
+- `Makefile` - All automation commands
+
+### Tests (`/tests`)
+- `test-all.sh` - Comprehensive test runner
+- `test-backend-api.sh` - API endpoint tests
+- `test-backend-pytest.sh` - Python unit tests
+- `TESTING.md` - Testing documentation
+
+## Docker Setup
+
+All services run in containers:
+```yaml
+backend:     localhost:8101 → container:8000
+chromadb:    localhost:8102 → container:8000  
+ollama:      localhost:11434 → container:11434
+frontend:    localhost:8100 (not containerized)
+```
 
 ## API Endpoints
 
-- `POST /api/documents` - Ingest documents
-- `GET /api/documents` - List documents
-- `GET /api/documents/{id}` - Get specific document  
-- `POST /api/chat` - Query knowledge base
-- `GET /health` - Health check with deps status
+- `POST /api/documents` - Ingest documents (async processing)
+- `GET /api/documents` - List with pagination
+- `GET /api/documents/{id}` - Get document + status
+- `POST /api/chat` - RAG query with context control
+- `GET /health` - Service health + dependencies
 
-## Testing & Quality
+## Environment Variables
 
-- Run `backend/run_tests.sh` for full test suite
-- Tests use proper fixtures and async patterns
-- Linting: `ruff check .` and `ruff format .`
-
-## Common Tasks
-
-### Change AI Model
-Edit `backend/.env`:
-```
-GENERATIVE_MODEL=gemma3n:e4b
+### Root `.env`
+```bash
+FRONTEND_PORT=8100
+API_PORT=8101
+CHROMA_GATEWAY_PORT=8102
+BACKEND_API_KEY=test-api-key-123
 ```
 
-### Fix Missing Dependencies
+### Backend `.env`
+```bash
+EMBEDDING_MODEL=mxbai-embed-large
+GENERATIVE_MODEL=gemma2:9b
+OLLAMA_BASE_URL=http://ollama:11434  # Container name
+CHROMA_HOST=chromadb                  # Container name
+```
+
+## Common Development Tasks
+
+### Pull Ollama Models
+```bash
+docker compose exec ollama ollama pull mxbai-embed-large
+docker compose exec ollama ollama pull gemma2:9b
+```
+
+### Check Ollama Models
+```bash
+docker compose exec ollama ollama list
+```
+
+### Reset ChromaDB
+```bash
+make stop-all
+docker volume rm synapse_chroma_data
+make run-all
+```
+
+### Update Dependencies
 ```bash
 cd backend
 pip install -r requirements.txt
+cd ../frontend/synapse
+npm install
 ```
 
-### Debug RAG Pipeline
-Check logs for request IDs - all operations are correlated.
+## Architecture Notes
+
+- **Async Processing**: Document ingestion is async with status tracking
+- **Graceful Degradation**: System works if ChromaDB/Ollama are down
+- **Security**: API key required, AI responses sanitized with DOMPurify
+- **Performance**: ~3-4 second query time with local LLMs
+- **Database**: SQLite `synapse.db` (gitignored)
+
+## Current Features
+
+- Document ingestion with async processing
+- RAG-powered chat with source citations
+- Context limit controls (1-20 documents)
+- Dark mode UI with virtual scrolling
+- Voice transcription PoC (Deepgram)
+- Docker containerization for all services
+- Comprehensive test suite
 
 ## Next Priorities
 
 1. Document management UI (view, edit, delete)
 2. Advanced search with filters
-3. Tag management and filtering
-4. Export functionality
-5. Audio ingestion with Deepgram (PoC complete)
-6. Streaming chat responses
-7. Multi-user support
+3. Streaming chat responses
+4. Better error handling for model downloads
+5. Production deployment guide
 
-## MCP Tools to Use
+## Gotchas & Tips
 
-- **context7**: Check for library docs and examples
-- **zen**: Get second opinions, debugging help, code review
+- **First Run**: Ollama needs to download models (~3GB)
+- **Memory**: ChromaDB can be memory hungry
+- **Ports**: All use 8100-8199 range to avoid conflicts
+- **API Key**: Required for all backend requests
+- **Model Names**: Must match exactly in Ollama
+- **Docker**: Use `docker compose` (v2) not `docker-compose`
 
-## Important Notes
+## MCP Tools
 
-- System degrades gracefully if ChromaDB is down
-- All models configurable via environment variables
-- API requires X-API-KEY header authentication
-- Frontend uses client-side fetch with CORS enabled
-- Ollama manages GPU/CPU memory automatically
-- Chat queries take ~3-4 seconds with local LLMs
-- **Ports**: All services use 8100-8199 range to avoid conflicts
-- **Security**: AI responses are sanitized with DOMPurify
-- **Docker Builds**: Can be slow due to ML dependencies (~800MB)
-- **Voice PoC**: Deepgram API key exposed in browser - NOT FOR PRODUCTION
-  - Located in `/app/components/voice/DeepgramPocButton.tsx`
-  - Push-to-talk using pointer events
-  - 250ms MediaRecorder chunks for low latency
-  - Browser compatibility: Chrome, Edge, Firefox (no Safari)
-- **Database**: SQLite database is now `synapse.db` (was capture.db)
-- **Git**: Database files (*.db) are gitignored for privacy
-
-## Ollama Performance
-
-- Embedding model: mxbai-embed-large (334M params)
-- Generative model: gemma3n:e2b (2.6GB)
-- GPU: AMD Radeon Graphics (4GB VRAM)
-- Ollama intelligently offloads layers between GPU/CPU based on available memory
+When working on this codebase, use:
+- **context7**: For library documentation
+- **zen**: For code review, debugging, architecture decisions
