@@ -18,7 +18,7 @@ services:
       - OLLAMA_BASE_URL=http://ollama:11434
     depends_on:
       chromadb:
-        condition: service_healthy
+        condition: service_started
       ollama:
         condition: service_healthy
     networks:
@@ -41,6 +41,7 @@ services:
 
   chromadb:
     image: chromadb/chroma:latest
+    container_name: synapse_chromadb
     profiles:
       - ""  # Default profile (always active)
       - development
@@ -57,12 +58,6 @@ services:
     networks:
       - synapse-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     deploy:
       resources:
         limits:

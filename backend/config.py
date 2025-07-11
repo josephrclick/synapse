@@ -25,7 +25,7 @@ class Settings(BaseSettings):
     deepgram_api_key: Optional[str] = Field(None, description="Deepgram API key for speech-to-text")
     
     # Model Names
-    generative_model: str = Field(default="gemma3n:e4b", description="Generative model name")
+    generative_model: str = Field(default="gemma3n:e2b", description="Generative model name")
     embedding_model: str = Field(default="mxbai-embed-large", description="Embedding model name")
     reranker_model: str = Field(default="BAAI/bge-reranker-v2-m3", description="Reranker model name")
     

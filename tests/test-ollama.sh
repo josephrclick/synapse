@@ -53,7 +53,7 @@ echo "$models"
 
 # Check for required models
 echo -e "\n${YELLOW}Checking required models...${NC}"
-required_models=("mxbai-embed-large" "gemma3n:e4b")
+required_models=("mxbai-embed-large" "gemma3n:e2b")
 
 for model in "${required_models[@]}"; do
     if curl -s http://localhost:11434/api/tags | grep -q "\"$model\""; then
@@ -85,7 +85,7 @@ echo "Ollama container is set up and ready for use!"
 echo ""
 echo "To pull missing models:"
 echo "  docker compose exec ollama ollama pull mxbai-embed-large"
-echo "  docker compose exec ollama ollama pull gemma3n:e4b"
+echo "  docker compose exec ollama ollama pull gemma3n:e2b"
 echo ""
 echo "To check Ollama logs:"
 echo "  docker compose logs ollama -f"

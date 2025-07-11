@@ -127,7 +127,7 @@ DATABASE_URL=sqlite:///synapse.db
 # Haystack/Ollama Configuration
 OLLAMA_BASE_URL=http://localhost:11434
 EMBEDDING_MODEL=mxbai-embed-large
-GENERATIVE_MODEL=gemma3n:e4b
+GENERATIVE_MODEL=gemma3n:e2b
 RERANKER_MODEL=BAAI/bge-reranker-v2-m3
 
 # ChromaDB Configuration

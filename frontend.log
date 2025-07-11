@@ -8,37 +8,80 @@
    - Environments: .env.local, .env
 
  ✓ Starting...
- ✓ Ready in 773ms
+ ✓ Ready in 774ms
  ○ Compiling / ...
- ✓ Compiled / in 1703ms
- GET / 200 in 2019ms
- ○ Compiling /_not-found/page ...
- ✓ Compiled /_not-found/page in 614ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 669ms
- ○ Compiling /ingest ...
- ✓ Compiled /ingest in 659ms
- GET /ingest 200 in 698ms
-Backend URL: http://localhost:8101
- POST /ingest 200 in 49ms
- GET / 200 in 57ms
- ✓ Compiled /api/chat in 437ms
+ ✓ Compiled / in 1677ms
+ GET / 200 in 2025ms
+ ✓ Compiled /api/chat in 357ms
 Backend URL: http://localhost:8101
 API Key configured: Yes
-Backend response status: 500
+ ○ Compiling /_not-found/page ...
+ ✓ Compiled /_not-found/page in 702ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 759ms
+Backend response status: 200
 Backend response headers: {
-  'content-length': '60',
+  'content-length': '283',
   'content-type': 'application/json',
-  date: 'Thu, 10 Jul 2025 03:54:07 GMT',
+  date: 'Thu, 10 Jul 2025 23:54:06 GMT',
   server: 'uvicorn',
-  'x-request-id': '347ed0ab-c826-4d0d-a65c-fd8184ab0ebe'
+  'x-request-id': '76878e27-1877-4fe2-bde1-f89dadd11c78'
 }
-Backend error response: {"detail":"Failed to process chat query. Please try again."}
- POST /api/chat 500 in 120788ms
- GET / 200 in 49ms
- GET / 200 in 47ms
- GET / 200 in 57ms
- GET / 200 in 48ms
- GET / 200 in 49ms
- GET / 200 in 43ms
- GET / 200 in 54ms
- GET / 200 in 53ms
+ POST /api/chat 200 in 23972ms
+ ○ Compiling /ingest ...
+ ✓ Compiled /ingest in 694ms
+ GET /ingest 200 in 737ms
+Backend URL: http://localhost:8101
+ POST /ingest 200 in 54ms
+ GET / 200 in 51ms
+ POST /api/chat 200 in 54172ms
+ GET / 200 in 74ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 111ms
+ ✓ Compiled /favicon.ico in 447ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 701ms
+API Proxy Error: TypeError: fetch failed
+    at async POST (app/api/chat/route.ts:26:28)
+  24 |     // Forward the request and return the response directly.
+  25 |     // This is a simple, effective proxy that doesn't need streaming logic for the MVP.
+> 26 |     const backendResponse = await fetch(proxyRequest);
+     |                            ^
+  27 |     
+  28 |     // Log the response status for debugging
+  29 |     console.log('Backend response status:', backendResponse.status); {
+  [cause]: [Error [SocketError]: other side closed] {
+    code: 'UND_ERR_SOCKET',
+    socket: {
+      localAddress: '127.0.0.1',
+      localPort: 54230,
+      remoteAddress: '127.0.0.1',
+      remotePort: 8101,
+      remoteFamily: 'IPv4',
+      timeout: undefined,
+      bytesWritten: 331,
+      bytesRead: 0
+    }
+  }
+}
+API Proxy Error: TypeError: fetch failed
+    at async POST (app/api/chat/route.ts:26:28)
+  24 |     // Forward the request and return the response directly.
+  25 |     // This is a simple, effective proxy that doesn't need streaming logic for the MVP.
+> 26 |     const backendResponse = await fetch(proxyRequest);
+     |                            ^
+  27 |     
+  28 |     // Log the response status for debugging
+  29 |     console.log('Backend response status:', backendResponse.status); {
+  [cause]: [Error [SocketError]: other side closed] {
+    code: 'UND_ERR_SOCKET',
+    socket: {
+      localAddress: '127.0.0.1',
+      localPort: 38486,
+      remoteAddress: '127.0.0.1',
+      remotePort: 8101,
+      remoteFamily: 'IPv4',
+      timeout: undefined,
+      bytesWritten: 331,
+      bytesRead: 0
+    }
+  }
+}
+ POST /api/chat 500 in 44815ms
