@@ -122,3 +122,70 @@ API Proxy Error: TypeError: fetch failed
  GET /voice 200 in 73ms
  GET /.well-known/appspecific/com.chrome.devtools.json 404 in 74ms
  GET /favicon.ico?favicon.45db1c09.ico 200 in 222ms
+ GET / 200 in 129ms
+ GET / 200 in 64ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 217ms
+ GET / 200 in 30ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 220ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 216ms
+ GET /ingest 200 in 45ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 42ms
+Backend URL: http://localhost:8101
+ POST /ingest 200 in 44ms
+Backend URL: http://localhost:8101
+ POST /ingest 200 in 30ms
+Backend URL: http://localhost:8101
+ POST /ingest 200 in 30146ms
+ GET / 200 in 35ms
+ GET /voice 200 in 95ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 78ms
+ GET / 200 in 37ms
+Backend URL: http://localhost:8101
+API Key configured: Yes
+Backend response status: 200
+Backend response headers: {
+  'content-length': '465',
+  'content-type': 'application/json',
+  date: 'Fri, 11 Jul 2025 05:12:39 GMT',
+  server: 'uvicorn',
+  'x-request-id': 'de644fed-6e2a-4b07-9d77-0761abe09605'
+}
+ POST /api/chat 200 in 28478ms
+ ✓ Compiled in 123ms
+ ✓ Compiled in 119ms
+ ✓ Compiled / in 35ms
+ GET / 200 in 335ms
+ GET / 200 in 42ms
+ GET / 200 in 40ms
+ GET /ingest 200 in 25ms
+ GET / 200 in 33ms
+ GET / 200 in 69ms
+ ✓ Compiled in 136ms
+ GET / 200 in 252ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 225ms
+ GET / 200 in 34ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 217ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 217ms
+ GET /ingest 200 in 22ms
+ GET / 200 in 33ms
+ GET / 200 in 37ms
+ GET / 200 in 34ms
+API Proxy Error: TypeError: fetch failed
+    at async POST (app/api/chat/route.ts:26:28)
+  24 |     // Forward the request and return the response directly.
+  25 |     // This is a simple, effective proxy that doesn't need streaming logic for the MVP.
+> 26 |     const backendResponse = await fetch(proxyRequest);
+     |                            ^
+  27 |     
+  28 |     // Log the response status for debugging
+  29 |     console.log('Backend response status:', backendResponse.status); {
+  [cause]: Error: connect ECONNREFUSED 127.0.0.1:8101
+      at <unknown> (Error: connect ECONNREFUSED 127.0.0.1:8101) {
+    errno: -111,
+    code: 'ECONNREFUSED',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 8101
+  }
+}
+ POST /api/chat 500 in 87ms

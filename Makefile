@@ -67,6 +67,7 @@ help: ## Show this help message
 	@echo -e ""
 	@echo -e "$(YELLOW)Management:$(NC)"
 	@echo -e "  $(GREEN)health         $(NC) Show detailed health status"
+	@echo -e "  $(GREEN)health-detailed$(NC) Show Docker health status for each service"
 	@echo -e "  $(GREEN)reset          $(NC) Reset all services and data"
 	@echo -e "  $(GREEN)backup         $(NC) Backup data (SQLite + ChromaDB)"
 	@echo -e "  $(GREEN)restore        $(NC) Restore from backup"
@@ -207,13 +208,39 @@ clean: ## Clean temporary files and caches
 
 .PHONY: health
 health: ## Show detailed health status
-	@echo -e "$(YELLOW)Health Check:$(NC)"
+	@$(MAKE) health-detailed --no-print-directory
+
+.PHONY: health-detailed
+health-detailed: ## Show detailed Docker health status for each service
+	@echo -e "$(BLUE)Service Health Status (from Docker)$(NC)"
+	@echo -e ""
+	@SERVICES="backend chromadb ollama"; \
+	for service in $$SERVICES; do \
+		CID=$$(docker compose ps -q $$service 2>/dev/null); \
+		if [ -z "$$CID" ]; then \
+			printf "%-12s $(RED)❌ Not running$(NC)\n" "$$service:"; \
+		else \
+			STATUS=$$(docker inspect --format='{{.State.Status}}' $$CID 2>/dev/null); \
+			HEALTH=$$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' $$CID 2>/dev/null); \
+			if [ "$$HEALTH" = "healthy" ]; then \
+				printf "%-12s $(GREEN)✅ Healthy$(NC) ($$STATUS)\n" "$$service:"; \
+			elif [ "$$HEALTH" = "no-healthcheck" ]; then \
+				printf "%-12s $(YELLOW)⚠️  Running$(NC) (no health check defined)\n" "$$service:"; \
+			elif [ "$$HEALTH" = "starting" ]; then \
+				printf "%-12s $(YELLOW)🔄 Starting$(NC) health checks...\n" "$$service:"; \
+			else \
+				printf "%-12s $(RED)❌ Unhealthy$(NC) ($$HEALTH)\n" "$$service:"; \
+				docker inspect --format='{{if .State.Health}}{{range .State.Health.Log}}  {{.Output}}{{end}}{{end}}' $$CID 2>/dev/null | tail -1; \
+			fi; \
+		fi; \
+	done
+	@echo -e ""
+	@echo -e "$(YELLOW)Backend API Response:$(NC)"
 	@if curl -s -H "X-API-KEY: $${BACKEND_API_KEY:-test-api-key-123}" \
 		http://localhost:$(API_PORT)/health 2>/dev/null | jq . 2>/dev/null; then \
 		true; \
 	else \
 		echo -e "$(RED)Backend API is not accessible$(NC)"; \
-		echo -e "Services may still be starting up..."; \
 	fi
 
 .PHONY: reset
@@ -233,6 +260,13 @@ reset: ## Reset all services and data
 .PHONY: backup
 backup: ## Backup data (SQLite + ChromaDB)
 	@echo -e "$(YELLOW)Creating backup...$(NC)"
+	@# Check if ChromaDB is healthy before backup
+	@CHROMADB_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' $$(docker compose ps -q chromadb 2>/dev/null) 2>/dev/null || echo "not-running"); \
+	if [ "$$CHROMADB_HEALTH" != "healthy" ]; then \
+		echo -e "$(RED)❌ Cannot backup - ChromaDB is $$CHROMADB_HEALTH$(NC)"; \
+		echo -e "Run $(GREEN)make health-detailed$(NC) for more information"; \
+		exit 1; \
+	fi
 	@BACKUP_DIR="backups/$$(date +%Y%m%d_%H%M%S)"; \
 	mkdir -p "$$BACKUP_DIR"; \
 	if [ -f "$(BACKEND_DIR)/synapse.db" ]; then \
@@ -259,7 +293,14 @@ restore: ## Restore from backup
 		fi; \
 		if [ -f "$$BACKUP_PATH/chromadb.tar.gz" ]; then \
 			docker compose up -d chromadb; \
-			sleep 5; \
+			echo -e "$(YELLOW)Waiting for ChromaDB to be healthy...$(NC)"; \
+			for i in {1..30}; do \
+				HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' $$(docker compose ps -q chromadb 2>/dev/null) 2>/dev/null || echo "not-running"); \
+				if [ "$$HEALTH" = "healthy" ]; then \
+					break; \
+				fi; \
+				sleep 2; \
+			done; \
 			docker compose exec chromadb tar -xzf - -C / < "$$BACKUP_PATH/chromadb.tar.gz" && \
 			echo -e "$(GREEN)✅ ChromaDB restored$(NC)"; \
 		fi; \
@@ -362,18 +403,27 @@ setup-backend:
 .PHONY: wait-for-services
 wait-for-services:
 	@echo -n "Waiting for services to be healthy"
-	@for i in {1..30}; do \
-		if docker compose ps | grep -E "(health: starting|unhealthy)" >/dev/null 2>&1; then \
-			echo -n "."; \
-			sleep 2; \
-		else \
+	@SERVICES="backend chromadb ollama"; \
+	for i in {1..60}; do \
+		ALL_HEALTHY=true; \
+		for service in $$SERVICES; do \
+			HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' $$(docker compose ps -q $$service 2>/dev/null) 2>/dev/null || echo "not-running"); \
+			if [ "$$HEALTH" != "healthy" ]; then \
+				ALL_HEALTHY=false; \
+				break; \
+			fi; \
+		done; \
+		if [ "$$ALL_HEALTHY" = true ]; then \
 			echo ""; \
+			echo -e "$(GREEN)✅ All services healthy$(NC)"; \
 			break; \
 		fi; \
-		if [ $$i -eq 30 ]; then \
+		echo -n "."; \
+		sleep 2; \
+		if [ $$i -eq 60 ]; then \
 			echo ""; \
 			echo -e "$(YELLOW)⚠️  Some services may not be fully healthy$(NC)"; \
-			echo -e "Check status with: $(GREEN)make status$(NC)"; \
+			echo -e "Check status with: $(GREEN)make health-detailed$(NC)"; \
 		fi; \
 	done
 
@@ -412,6 +462,13 @@ show-status:
 .PHONY: pull-models
 pull-models: ## Pull required Ollama models
 	@echo -e "$(YELLOW)Pulling Ollama models...$(NC)"
+	@# Check if Ollama is healthy before pulling models
+	@OLLAMA_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' $$(docker compose ps -q ollama 2>/dev/null) 2>/dev/null || echo "not-running"); \
+	if [ "$$OLLAMA_HEALTH" != "healthy" ]; then \
+		echo -e "$(RED)❌ Cannot pull models - Ollama is $$OLLAMA_HEALTH$(NC)"; \
+		echo -e "Run $(GREEN)make health-detailed$(NC) for more information"; \
+		exit 1; \
+	fi
 	@docker compose exec ollama ollama pull mxbai-embed-large
 	@docker compose exec ollama ollama pull gemma2:9b
 	@echo -e "$(GREEN)✅ Models pulled$(NC)"

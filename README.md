@@ -60,26 +60,27 @@ This thing is a starter kit you can build damn near anything on. Feeling brave?
 git clone https://github.com/josephrclick/synapse.git
 cd synapse
 make init        # First time? Start here!
-make run-all     # Start everything (Docker + frontend)
+make dev         # Start everything (Docker + frontend)
 ```
 
 That's it. Seriously. The Makefile handles everything:
 - ✅ Creates `.env` files with sensible defaults
 - ✅ Installs all dependencies (Python & Node.js)
-- ✅ Builds and starts Docker containers with health checks
-- ✅ Waits for services to be ready before proceeding
+- ✅ Builds and starts Docker containers with proper health checks
+- ✅ Waits for all services to be healthy using Docker's native health status
 - ✅ Launches the frontend in the background
-- ✅ Pulls Ollama models on first run (~3GB download)
+- ✅ Automatically manages service dependencies (backend waits for healthy ChromaDB/Ollama)
 
 ### 🎯 Common Commands
 
 ```bash
-make run-all     # Start all services (recommended)
-make stop-all    # Stop all Docker services
-make status      # Check what's running
-make logs        # View all Docker logs
+make dev         # Start all services in background (recommended)
+make stop        # Stop all services
+make status      # Show service status and health
+make health-detailed # Show Docker health status for each service
+make logs        # View logs from all services
 make logs-backend # View backend logs only
-make clean       # Clean up everything (careful!)
+make pull-models # Pull required Ollama models
 make help        # Show all available commands
 ```
 
@@ -125,16 +126,19 @@ CHROMADB_ALLOW_RESET=FALSE  # CRITICAL: Prevents accidental data loss
 ### 🚑 Quick Troubleshooting
 
 ```bash
-# Check if everything is running
-make status
+# Check if everything is running with Docker health status
+make health-detailed
 
 # View logs if something's wrong
 make logs-backend   # Backend issues
 make logs-ollama    # Model download status
 make logs-chromadb  # Vector DB issues
 
+# Interactive troubleshooting guide
+make troubleshoot
+
 # Nuclear option - reset everything
-make clean && make init && make run-all
+make reset && make init && make dev
 ```
 
 ### The Roadmap
@@ -151,7 +155,7 @@ make clean && make init && make run-all
   * The AI sometimes gets philosophical. We consider this a feature.
   * ChromaDB might use more RAM than Chrome. Isn't it ironic? Don't you think?
   * If you feed it your diary, it might become too emotionally intelligent.
-  * First run takes a while - Ollama needs to download models (~3GB). Perfect coffee break timing.
+  * First run takes a while - Ollama needs to download models (~3GB). Use `make pull-models` to fetch them manually.
 
 -----
 

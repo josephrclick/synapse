@@ -9,85 +9,70 @@ This guide documents all available Make commands for the Synapse project, organi
 # Clone and start from scratch
 git clone <repo-url>
 cd synapse
-make run-all          # Does EVERYTHING automatically!
-```
-
-### Or use the setup wizard:
-```bash
-make init             # Interactive setup wizard
-make run-all          # Start all services
+make init             # First-time setup
+make dev              # Start all services
 ```
 
 ### Daily use
 ```bash
-make run-all          # Start all services (auto-setup if needed)
-make status           # Check if everything is running
-make stop-all         # Stop all services
+make dev              # Start all services in background
+make status           # Show service status and health
+make stop             # Stop all services
+make logs             # View logs from all services
 ```
 
 ## Service Management
 
 ### Starting Services
 
-- `make run-all` - **Smart start** - Auto-creates configs, installs deps, starts everything
-- `make run-all-with-ollama` - Start all services including Ollama if not running
-- `make run-backend` - Start only the backend API
-- `make run-frontend` - Start only the frontend dev server
-- `make rebuild-all` - Rebuild Docker images with no cache and start
+- `make dev` - **Recommended** - Start all services in background
+- `make run-backend` - Run backend locally (for development)
+- `make run-frontend` - Run frontend locally (for development)
 
 ### First-Time Setup
 
-- `make init` - **Complete setup wizard** - Creates all configs, installs deps, pulls models
-- `make fresh-start` - Clean everything and run init (nuclear option)
+- `make init` - Initialize project (creates .env files, installs dependencies)
+- `make fresh` - Complete fresh start (clean + init + dev)
 
 ### Stopping Services
 
-- `make stop-all` - Stop all Docker services and Ollama (if started via make)
-- `make restart service=backend` - Restart a specific service
+- `make stop` - Stop all services
+- `make restart service=backend` - Restart a specific service (backend, chromadb, ollama)
 
 ## Health & Status Checks
 
-- `make status` - Show status of all services with health indicators
-- `make check-all` - Run all checks (dependencies, ports, Ollama)
-- `make check-deps` - Check system dependencies (Docker, Python, Node.js)
+- `make status` - Show service status and health
+- `make health` - Show detailed health status
+- `make check-requirements` - Verify required tools are installed
 - `make check-ports` - Check if required ports are available
-- `make check-ollama` - Check Ollama status and available models
-- `make health-check` - Detailed health check of running services
-- `make validate-setup` - Validate entire setup configuration
 
 ## Development Tools
 
 ### Setup & Configuration
 
-- `make dev-setup` - Complete development environment setup
-- `make setup` - Setup Python virtual environment
-- `make fix-dockerfile` - Fix the Dockerfile COPY path issue
 - `make pull-models` - Pull required Ollama models
+- `make shell` - Open shell in backend container
 
 ### Testing & Debugging
 
-- `make test` - Run backend tests
-- `make test-all` - Run all tests (backend + frontend)
-- `make lint` - Run code linting
-- `make ingest-test` - Test document ingestion endpoint
-- `make query-test` - Test RAG query endpoint
-- `make docker-shell` - Open shell in backend container
-- `make debug-env` - Show all environment variables
+- `make test` - Run all tests
+- `make lint` - Run linters
+- `make troubleshoot` - Interactive troubleshooting guide
 
 ### Logs & Monitoring
 
-- `make logs` - View all Docker logs
-- `make logs-backend` - View only backend logs
-- `make logs-chromadb` - View only ChromaDB logs
-- `make logs-ollama` - View Ollama logs (if started via make)
-- `make monitor` - Live monitoring dashboard (updates every 2 seconds)
+- `make logs` - View logs from all services
+- `make logs-backend` - View backend logs
+- `make logs-chromadb` - View ChromaDB logs
+- `make logs-ollama` - View Ollama logs
 
 ## Maintenance
 
-- `make clean` - Clean cache and temporary files
-- `make clean-docker` - Remove Docker images and volumes (⚠️ DELETES DATA)
-- `make backup-data` - Backup SQLite database and ChromaDB data
-- `make troubleshoot` - Interactive troubleshooting guide
+- `make clean` - Clean temporary files and caches
+- `make reset` - Reset all services and data (prompts for confirmation)
+- `make backup` - Backup data (SQLite + ChromaDB)
+- `make restore` - Restore from backup
+- `make rebuild` - Rebuild containers (no cache)
 
 ## Environment Variables
 

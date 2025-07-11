@@ -65,7 +65,7 @@ Tests document ingestion via direct API call:
 
 2. **Start all services**
    ```bash
-   make run-all  # Starts Docker containers + frontend
+   make dev  # Starts Docker containers + frontend
    ```
 
 3. **Verify services are healthy**

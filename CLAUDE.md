@@ -16,10 +16,11 @@ Synapse is a private, local-first knowledge management system:
 ### Most Common
 ```bash
 make init               # First-time setup (creates .env files)
-make run-all            # Start everything (Docker + frontend)
-make stop-all           # Stop all services
-make logs               # View Docker logs
-make status             # Check what's running
+make dev                # Start everything (Docker + frontend)
+make stop               # Stop all services
+make status             # Show service status and health
+make health-detailed    # Show Docker health status for each service
+make logs               # View logs from all services
 ```
 
 ### Testing
@@ -33,7 +34,9 @@ make status             # Check what's running
 make logs-backend       # Backend logs only
 make logs-chromadb      # ChromaDB logs only
 make logs-ollama        # Ollama logs only
-docker compose ps       # Check container health
+make health-detailed    # Show Docker health status for each service
+make troubleshoot       # Interactive troubleshooting guide
+docker compose ps       # Check container status
 ```
 
 ## Key Files to Know
@@ -66,13 +69,15 @@ docker compose ps       # Check container health
 
 ## Docker Setup
 
-All services run in containers:
+All services run in containers with health checks:
 ```yaml
-backend:     localhost:8101 → container:8000
-chromadb:    localhost:8102 → container:8000  
-ollama:      localhost:11434 → container:11434
+backend:     localhost:8101 → container:8000 (health: /health endpoint)
+chromadb:    localhost:8102 → container:8000 (health: /api/v2/heartbeat)
+ollama:      localhost:11434 → container:11434 (health: ollama list)
 frontend:    localhost:8100 (not containerized)
 ```
+
+Services use Docker's native health checks and dependency management.
 
 ## API Endpoints
 
@@ -104,6 +109,8 @@ CHROMA_HOST=chromadb                  # Container name
 
 ### Pull Ollama Models
 ```bash
+make pull-models  # Pulls both embedding and generative models
+# Or manually:
 docker compose exec ollama ollama pull mxbai-embed-large
 docker compose exec ollama ollama pull gemma2:9b
 ```
@@ -113,11 +120,13 @@ docker compose exec ollama ollama pull gemma2:9b
 docker compose exec ollama ollama list
 ```
 
-### Reset ChromaDB
+### Reset Everything
 ```bash
-make stop-all
+make reset  # Prompts before deleting all data
+# Or just ChromaDB:
+make stop
 docker volume rm synapse_chroma_data
-make run-all
+make dev
 ```
 
 ### Update Dependencies
@@ -128,10 +137,28 @@ cd ../frontend/synapse
 npm install
 ```
 
+### Development Commands
+```bash
+make run-backend        # Run backend locally (for development)
+make run-frontend       # Run frontend locally (for development)
+make test               # Run all tests
+make lint               # Run linters
+make shell              # Open shell in backend container
+```
+
+### Management Commands
+```bash
+make backup             # Backup data (SQLite + ChromaDB)
+make restore            # Restore from backup
+make rebuild            # Rebuild containers (no cache)
+make restart service=backend  # Restart specific service
+make fresh              # Complete fresh start
+
 ## Architecture Notes
 
 - **Async Processing**: Document ingestion is async with status tracking
-- **Graceful Degradation**: System works if ChromaDB/Ollama are down
+- **Health Management**: Docker-native health checks with automatic container restarts
+- **Service Dependencies**: Backend waits for ChromaDB and Ollama to be healthy
 - **Security**: API key required, AI responses sanitized with DOMPurify
 - **Performance**: ~3-4 second query time with local LLMs
 - **Database**: SQLite `synapse.db` (gitignored)
@@ -143,8 +170,9 @@ npm install
 - Context limit controls (1-20 documents)
 - Dark mode UI with virtual scrolling
 - Voice transcription PoC (Deepgram)
-- Docker containerization for all services
+- Docker containerization with health checks for all services
 - Comprehensive test suite
+- Automatic service dependency management
 
 ## Next Priorities
 
@@ -156,12 +184,13 @@ npm install
 
 ## Gotchas & Tips
 
-- **First Run**: Ollama needs to download models (~3GB)
+- **First Run**: Ollama needs to download models (~3GB) - use `make pull-models`
 - **Memory**: ChromaDB can be memory hungry
 - **Ports**: All use 8100-8199 range to avoid conflicts
 - **API Key**: Required for all backend requests
 - **Model Names**: Must match exactly in Ollama
 - **Docker**: Use `docker compose` (v2) not `docker-compose`
+- **Health Checks**: Services must be healthy before operations (backup/restore/pull-models)
 
 ## MCP Tools
 

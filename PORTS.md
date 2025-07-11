@@ -55,7 +55,7 @@ make check-ports
 
 ```bash
 # Start all services with configured ports
-make run-all
+make dev
 
 # View current port mappings
 docker ps --format "table {{.Names}}\t{{.Ports}}"

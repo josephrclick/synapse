@@ -18,7 +18,7 @@ services:
       - OLLAMA_BASE_URL=http://ollama:11434
     depends_on:
       chromadb:
-        condition: service_started
+        condition: service_healthy
       ollama:
         condition: service_healthy
     networks:
@@ -58,6 +58,12 @@ services:
     networks:
       - synapse-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     deploy:
       resources:
         limits:
