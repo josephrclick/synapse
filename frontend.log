@@ -85,3 +85,40 @@ API Proxy Error: TypeError: fetch failed
   }
 }
  POST /api/chat 500 in 44815ms
+ GET / 200 in 70ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 68ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 223ms
+ GET / 200 in 68ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 43ms
+ GET / 200 in 147ms
+ ✓ Compiled in 75ms
+ ✓ Compiled in 125ms
+ ○ Compiling /voice ...
+ ✓ Compiled /voice in 683ms
+ GET /voice 200 in 845ms
+ ✓ Compiled in 124ms
+ GET /voice 200 in 77ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 55ms
+ GET /voice 200 in 63ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 83ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 257ms
+ GET /voice 200 in 72ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 64ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 227ms
+ ✓ Compiled in 123ms
+ ✓ Compiled in 132ms
+   Reload env: .env.local
+ ✓ Compiled in 14ms
+ GET / 200 in 153ms
+ GET /voice 200 in 155ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 246ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 217ms
+ GET /voice 200 in 180ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 67ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 221ms
+ GET /voice 200 in 77ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 91ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 219ms
+ GET /voice 200 in 73ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 74ms
+ GET /favicon.ico?favicon.45db1c09.ico 200 in 222ms
