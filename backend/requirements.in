@@ -9,37 +9,38 @@
 # To upgrade a specific package:
 #   pip-compile --upgrade-package <package-name> backend/requirements.in -o backend/requirements.txt
 
-# Core API Framework (allow minor updates for security/performance)fastapi>=0.115.0,<1.0.0
+# Core API Framework
+fastapi>=0.115.0,<1.0.0
 uvicorn[standard]>=0.32.0,<1.0.0
+python-multipart>=0.0.6
 
-# Data Validation
+# Data Validation & Config
 pydantic>=2.11.0,<3.0.0
 pydantic-settings>=2.1.0,<3.0.0
-
-# Environment & Configuration
 python-dotenv>=1.0.0
 
 # HTTP Client
 httpx>=0.27.0
 
-# File Upload Support
-python-multipart>=0.0.6
+# AI/ML Pipeline - Haystack & Extensions
+haystack-ai>=2.11.0,<3.0.0  # Changed from ==2.7.0
+pgvector-haystack==3.4.0
+ollama-haystack>=1.1.0,<2.0.0  # Added upper bound
 
-# AI/ML Pipeline Components
-haystack-ai>=2.0,<3.0
-ollama-haystack>=1.1.0,<4.0.0
+# PostgreSQL
+psycopg[binary,pool]>=3.1,<4.0
+asyncpg>=0.29.0
 
-# ChromaDB - Pin to compatible versions
-# Using chroma-haystack 0.15.0 which works with chromadb 0.4.x
-chroma-haystack==0.15.0
-chromadb<0.4.20
-
-# Database Support
-databases[aiosqlite]>=0.8.0
-aiosqlite>=0.20.0
+# Vector/ML Dependencies
+numpy>=1.24.0,<2.0.0
+transformers>=4.36.0,<5.0.0
+torch>=2.0.0,<3.0.0
+sentence-transformers>=2.3.0,<3.0.0
 
 # Text Processing
-nltk>=3.9.1
+nltk>=3.8.1
+scikit-learn>=1.3.0,<2.0.0
 
-# NumPy - Pin to 1.x for ChromaDB 0.4.x compatibility
-numpy<2.0.0
+# Database (keeping for migration period)
+databases[aiosqlite]>=0.8.0
+aiosqlite>=0.20.0
