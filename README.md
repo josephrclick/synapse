@@ -60,28 +60,37 @@ This thing is a starter kit you can build damn near anything on. Feeling brave?
 git clone https://github.com/josephrclick/synapse.git
 cd synapse
 make init        # First time? Start here!
-make dev         # Start everything (Docker + frontend)
+make dev         # Start everything with interactive setup
 ```
 
 That's it. Seriously. The Makefile handles everything:
 - ✅ Creates `.env` files with sensible defaults
 - ✅ Installs all dependencies (Python & Node.js)
 - ✅ Builds and starts Docker containers with proper health checks
+- ✅ **Interactive port handling** - if port 8100 is busy, choose to retry or skip frontend
+- ✅ **Interactive model management** - download only the models you need, when you need them
 - ✅ Waits for all services to be healthy using Docker's native health status
-- ✅ Launches the frontend in the background
 - ✅ Automatically manages service dependencies (backend waits for healthy ChromaDB/Ollama)
 
 ### 🎯 Common Commands
 
 ```bash
-make dev         # Start all services in background (recommended)
+make dev         # Start all services with interactive setup
 make stop        # Stop all services
 make status      # Show service status and health
 make health-detailed # Show Docker health status for each service
 make logs        # View logs from all services
-make logs-backend # View backend logs only
-make pull-models # Pull required Ollama models
-make help        # Show all available commands
+
+# Model Management
+make check-models    # See which Ollama models are installed
+make interactive-pull-models # Interactive model selection menu
+make pull-models     # Pull all required models at once
+
+# Debugging
+make logs-backend    # View backend logs only
+make logs-ollama     # View Ollama logs
+make troubleshoot    # Interactive troubleshooting guide
+make help           # Show all available commands
 ```
 
 ### 🧪 Testing
@@ -146,6 +155,8 @@ make reset && make init && make dev
   * [x] ~~Make it work~~ ✅
   * [x] ~~Make it fast~~ ✅  
   * [x] ~~Make it pretty~~ ✅
+  * [x] ~~Interactive model management~~ ✅
+  * [x] ~~Smart port handling~~ ✅
   * [ ] Add voice input (Deepgram PoC already in!)
   * [ ] Make it predict what you're thinking
   * [ ] Achieve sentience (but like, the friendly kind)
@@ -155,7 +166,8 @@ make reset && make init && make dev
   * The AI sometimes gets philosophical. We consider this a feature.
   * ChromaDB might use more RAM than Chrome. Isn't it ironic? Don't you think?
   * If you feed it your diary, it might become too emotionally intelligent.
-  * First run takes a while - Ollama needs to download models (~3GB). Use `make pull-models` to fetch them manually.
+  * First run is now interactive - choose which models to download (3-5GB each)
+  * Frontend port conflicts? No problem - the system asks what you want to do
 
 -----
 

@@ -16,12 +16,16 @@ Synapse is a private, local-first knowledge management system:
 ### Most Common
 ```bash
 make init               # First-time setup (creates .env files)
-make dev                # Start everything (Docker + frontend)
+make dev                # Start everything with interactive setup
 make stop               # Stop all services
 make status             # Show service status and health
 make health-detailed    # Show Docker health status for each service
 make logs               # View logs from all services
 ```
+
+### Interactive Features
+- **Port Handling**: If port 8100 is busy, `make dev` offers to retry or skip frontend
+- **Model Management**: Missing models trigger an interactive download menu
 
 ### Testing
 ```bash
@@ -100,24 +104,29 @@ BACKEND_API_KEY=test-api-key-123
 ### Backend `.env`
 ```bash
 EMBEDDING_MODEL=mxbai-embed-large
-GENERATIVE_MODEL=gemma2:9b
+GENERATIVE_MODEL=gemma3n:e2b
+RERANKER_MODEL=linux6200/linux6200/bge-reranker-v2-m3
 OLLAMA_BASE_URL=http://ollama:11434  # Container name
 CHROMA_HOST=chromadb                  # Container name
 ```
 
 ## Common Development Tasks
 
-### Pull Ollama Models
+### Model Management
 ```bash
-make pull-models  # Pulls both embedding and generative models
-# Or manually:
-docker compose exec ollama ollama pull mxbai-embed-large
-docker compose exec ollama ollama pull gemma2:9b
-```
+# Check what's installed
+make check-models
 
-### Check Ollama Models
-```bash
-docker compose exec ollama ollama list
+# Interactive model management (recommended)
+make interactive-pull-models
+
+# Pull all models at once
+make pull-models
+
+# Manual pulls
+docker compose exec ollama ollama pull gemma3n:e2b
+docker compose exec ollama ollama pull mxbai-embed-large
+docker compose exec ollama ollama pull linux6200/linux6200/bge-reranker-v2-m3
 ```
 
 ### Reset Everything
@@ -191,6 +200,8 @@ make fresh              # Complete fresh start
 - **Model Names**: Must match exactly in Ollama
 - **Docker**: Use `docker compose` (v2) not `docker-compose`
 - **Health Checks**: Services must be healthy before operations (backup/restore/pull-models)
+- **Port Detection**: Makefile uses `ss` command for reliable IPv4/IPv6 detection, falls back to `lsof`
+- **Frontend**: Next.js runs on `0.0.0.0:8100` (IPv4) via `--hostname 0.0.0.0` flag
 
 ## MCP Tools
 

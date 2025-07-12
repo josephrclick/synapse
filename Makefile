@@ -17,7 +17,7 @@
 
 # Shell configuration
 SHELL := /bin/bash
-.SHELLFLAGS := -eu -o pipefail -c
+.SHELLFLAGS := -euo pipefail -c
 
 # Load environment variables
 -include .env
@@ -29,6 +29,19 @@ API_PORT ?= 8101
 CHROMA_GATEWAY_PORT ?= 8102
 FRONTEND_DIR ?= frontend/synapse
 BACKEND_DIR ?= backend
+
+# Flag to control frontend startup
+SKIP_FRONTEND ?= false
+
+# Verbose mode
+VERBOSE ?= false
+ifeq ($(VERBOSE),true)
+	VERBOSE_FLAG := -v
+	DOCKER_COMPOSE_FLAGS := --verbose
+else
+	VERBOSE_FLAG :=
+	DOCKER_COMPOSE_FLAGS :=
+endif
 
 # Colors for output
 GREEN := \033[0;32m
@@ -72,7 +85,9 @@ help: ## Show this help message
 	@echo -e "  $(GREEN)backup         $(NC) Backup data (SQLite + ChromaDB)"
 	@echo -e "  $(GREEN)restore        $(NC) Restore from backup"
 	@echo -e "  $(GREEN)shell          $(NC) Open shell in backend container"
-	@echo -e "  $(GREEN)pull-models    $(NC) Pull required Ollama models"
+	@echo -e "  $(GREEN)check-models   $(NC) Check installed Ollama models"
+	@echo -e "  $(GREEN)pull-models    $(NC) Pull all required Ollama models"
+	@echo -e "  $(GREEN)interactive-pull-models$(NC) Interactive model management"
 	@echo -e ""
 	@echo -e "$(YELLOW)Troubleshooting:$(NC)"
 	@echo -e "  $(GREEN)check-requirements$(NC) Verify required tools are installed"
@@ -81,11 +96,19 @@ help: ## Show this help message
 	@echo -e "  $(GREEN)logs-backend   $(NC) View backend logs"
 	@echo -e "  $(GREEN)logs-chromadb  $(NC) View ChromaDB logs"
 	@echo -e "  $(GREEN)logs-ollama    $(NC) View Ollama logs"
+	@echo -e "  $(GREEN)kill-frontend  $(NC) Force kill any process on frontend port"
 	@echo -e ""
 	@echo -e "$(YELLOW)Shortcuts:$(NC)"
 	@echo -e "  $(GREEN)rebuild        $(NC) Rebuild containers (no cache)"
 	@echo -e "  $(GREEN)restart        $(NC) Restart specific service"
 	@echo -e "  $(GREEN)fresh          $(NC) Complete fresh start"
+	@echo -e "  $(GREEN)qs             $(NC) Quick status (alias for quick-status)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Common Workflows:$(NC)"
+	@echo -e "  First time:  make init && make dev"
+	@echo -e "  Daily:       make dev, make qs, make stop"
+	@echo -e "  Debug:       make logs, make troubleshoot"
+	@echo -e "  Verbose:     VERBOSE=true make dev"
 
 # ========================================================================
 # QUICK START COMMANDS
@@ -117,11 +140,29 @@ init: ## Initialize project (first time setup)
 dev: ## Start all services in background (recommended)
 	@$(MAKE) check-ports
 	@echo -e "$(YELLOW)Starting all services...$(NC)"
-	@docker compose up -d
+	@docker compose $(DOCKER_COMPOSE_FLAGS) up -d
 	@echo -e ""
 	@echo -e "$(YELLOW)Waiting for services to be healthy...$(NC)"
 	@$(MAKE) wait-for-services
 	@echo -e ""
+	@# Check for Ollama models after services are healthy
+	@echo -e "$(YELLOW)Checking Ollama models...$(NC)"
+	@INSTALLED_MODELS=$$(docker compose exec ollama ollama list 2>/dev/null | tail -n +2 | awk '{print $$1}' | sort | uniq || echo ""); \
+	REQUIRED_MODELS="gemma3n:e2b mxbai-embed-large:latest linux6200/bge-reranker-v2-m3:latest"; \
+	MISSING_MODELS=""; \
+	for model in $$REQUIRED_MODELS; do \
+		if ! echo "$$INSTALLED_MODELS" | grep -q "^$$model$$"; then \
+			MISSING_MODELS="$$MISSING_MODELS $$model"; \
+		fi; \
+	done; \
+	if [ -n "$$MISSING_MODELS" ]; then \
+		echo -e "$(YELLOW)⚠️  Missing required Ollama models$(NC)"; \
+		echo -e ""; \
+		$(MAKE) interactive-pull-models; \
+		echo -e ""; \
+	else \
+		echo -e "$(GREEN)✅ All required models installed$(NC)"; \
+	fi
 	@$(MAKE) start-frontend-background
 	@echo -e ""
 	@$(MAKE) show-status
@@ -136,26 +177,50 @@ dev: ## Start all services in background (recommended)
 .PHONY: stop
 stop: ## Stop all services
 	@echo -e "$(YELLOW)Stopping all services...$(NC)"
+	@echo -e ""
+	@echo -e "$(BLUE)Stopping Docker services...$(NC)"
 	@docker compose down
-	@$(MAKE) stop-frontend
+	@echo -e ""
+	@echo -e "$(BLUE)Stopping frontend...$(NC)"
+	@$(MAKE) stop-frontend --no-print-directory
+	@echo -e ""
 	@echo -e "$(GREEN)✅ All services stopped$(NC)"
 
 .PHONY: status
 status: ## Show service status and health
 	@echo -e "$(BLUE)Service Status$(NC)"
 	@echo -e ""
-	@echo -e "$(YELLOW)Containers:$(NC)"
-	@docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Ports}}"
+	@echo -e "$(YELLOW)Docker Services:$(NC)"
+	@docker compose ps
 	@echo -e ""
 	@echo -e "$(YELLOW)Frontend:$(NC)"
-	@if [ -f .frontend.pid ] && kill -0 $$(cat .frontend.pid) 2>/dev/null; then \
-		echo -e "  $(GREEN)✅ Running$(NC) (PID: $$(cat .frontend.pid))"; \
-		echo -e "  http://localhost:$(FRONTEND_PORT)"; \
+	@if [ -f .frontend.skip ]; then \
+		echo -e "  $(YELLOW)⚠️  Skipped$(NC) (port $(FRONTEND_PORT) was in use)"; \
+		echo -e "  To start manually: cd $(FRONTEND_DIR) && npm run dev"; \
+	elif ss -tlnp 2>/dev/null | grep -q ":$(FRONTEND_PORT)\s" || lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
+		if [ -f .frontend.pid ] && kill -0 $$(cat .frontend.pid) 2>/dev/null; then \
+			echo -e "  $(GREEN)✅ Running$(NC) (Makefile-managed, PID: $$(cat .frontend.pid))"; \
+		else \
+			echo -e "  $(GREEN)✅ Running$(NC) (externally managed)"; \
+			FRONTEND_PROCESS=$$(ss -tlnp 2>/dev/null | grep ":$(FRONTEND_PORT)\s" | grep -oP 'pid=\K[0-9]+' | head -1 || lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN -t 2>/dev/null | head -1); \
+			if [ -n "$$FRONTEND_PROCESS" ]; then \
+				echo -e "  Process: PID $$FRONTEND_PROCESS"; \
+			fi; \
+		fi; \
+		echo -e "  URL: http://localhost:$(FRONTEND_PORT)"; \
 	else \
 		echo -e "  $(RED)❌ Not running$(NC)"; \
 	fi
-	@echo -e ""
-	@$(MAKE) health --no-print-directory
+
+.PHONY: quick-status qs
+quick-status qs: ## Quick service status check (alias: qs)
+	@docker compose ps --format "table {{.Name}}\t{{.Status}}\t{{.Health}}" | grep -E "(NAME|backend|chromadb|ollama)" || echo "No services running"
+	@echo -n "Frontend: "; \
+	if ss -tlnp 2>/dev/null | grep -q ":$(FRONTEND_PORT)\s" || lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
+		echo "✅ Running on port $(FRONTEND_PORT)"; \
+	else \
+		echo "❌ Not running"; \
+	fi
 
 .PHONY: logs
 logs: ## View logs from all services
@@ -198,8 +263,13 @@ clean: ## Clean temporary files and caches
 	@echo -e "$(YELLOW)Cleaning temporary files...$(NC)"
 	@find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	@find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
-	@find . -type f -name "*.pyc" -delete
-	@rm -f .frontend.pid frontend.log
+	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	@find . -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type d -name "node_modules/.cache" -exec rm -rf {} + 2>/dev/null || true
+	@rm -f .frontend.pid frontend.log .frontend.skip
+	@rm -f ./*.log 2>/dev/null || true
+	@# Clean any orphaned Docker resources
+	@docker system prune -f --volumes --filter "label!=keep" 2>/dev/null || true
 	@echo -e "$(GREEN)✅ Cleaned$(NC)"
 
 # ========================================================================
@@ -212,36 +282,31 @@ health: ## Show detailed health status
 
 .PHONY: health-detailed
 health-detailed: ## Show detailed Docker health status for each service
-	@echo -e "$(BLUE)Service Health Status (from Docker)$(NC)"
+	@echo -e "$(BLUE)Docker Health Status$(NC)"
 	@echo -e ""
-	@SERVICES="backend chromadb ollama"; \
-	for service in $$SERVICES; do \
-		CID=$$(docker compose ps -q $$service 2>/dev/null); \
-		if [ -z "$$CID" ]; then \
-			printf "%-12s $(RED)❌ Not running$(NC)\n" "$$service:"; \
+	@docker compose ps
+	@echo -e ""
+	@echo -e "$(YELLOW)Quick Health Check:$(NC)"
+	@ALL_HEALTHY=true; \
+	for service in backend chromadb ollama; do \
+		if docker compose ps $$service --format json | jq -e '.Health == "healthy"' >/dev/null 2>&1; then \
+			echo -e "  $$service: $(GREEN)✅ Healthy$(NC)"; \
 		else \
-			STATUS=$$(docker inspect --format='{{.State.Status}}' $$CID 2>/dev/null); \
-			HEALTH=$$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' $$CID 2>/dev/null); \
-			if [ "$$HEALTH" = "healthy" ]; then \
-				printf "%-12s $(GREEN)✅ Healthy$(NC) ($$STATUS)\n" "$$service:"; \
-			elif [ "$$HEALTH" = "no-healthcheck" ]; then \
-				printf "%-12s $(YELLOW)⚠️  Running$(NC) (no health check defined)\n" "$$service:"; \
-			elif [ "$$HEALTH" = "starting" ]; then \
-				printf "%-12s $(YELLOW)🔄 Starting$(NC) health checks...\n" "$$service:"; \
-			else \
-				printf "%-12s $(RED)❌ Unhealthy$(NC) ($$HEALTH)\n" "$$service:"; \
-				docker inspect --format='{{if .State.Health}}{{range .State.Health.Log}}  {{.Output}}{{end}}{{end}}' $$CID 2>/dev/null | tail -1; \
-			fi; \
+			echo -e "  $$service: $(RED)❌ Not healthy$(NC)"; \
+			ALL_HEALTHY=false; \
 		fi; \
-	done
-	@echo -e ""
-	@echo -e "$(YELLOW)Backend API Response:$(NC)"
-	@if curl -s -H "X-API-KEY: $${BACKEND_API_KEY:-test-api-key-123}" \
-		http://localhost:$(API_PORT)/health 2>/dev/null | jq . 2>/dev/null; then \
-		true; \
-	else \
-		echo -e "$(RED)Backend API is not accessible$(NC)"; \
+	done; \
+	if [ "$$ALL_HEALTHY" = true ]; then \
+		echo -e ""; \
+		echo -e "$(GREEN)All services are healthy!$(NC)"; \
 	fi
+	@echo -e ""
+	@echo -e "$(YELLOW)Service URLs:$(NC)"
+	@echo -e "  Frontend:    http://localhost:$(FRONTEND_PORT)"
+	@echo -e "  Backend API: http://localhost:$(API_PORT)"
+	@echo -e "  API Docs:    http://localhost:$(API_PORT)/docs"
+	@echo -e "  ChromaDB:    http://localhost:$(CHROMA_GATEWAY_PORT)"
+	@echo -e "  Ollama:      http://localhost:11434"
 
 .PHONY: reset
 reset: ## Reset all services and data
@@ -320,16 +385,24 @@ shell: ## Open shell in backend container
 .PHONY: check-requirements
 check-requirements: ## Verify required tools are installed
 	@echo -e "$(YELLOW)Checking requirements...$(NC)"
-	@command -v docker >/dev/null 2>&1 || { echo -e "$(RED)❌ Docker is required$(NC)"; exit 1; }
-	@docker compose version >/dev/null 2>&1 || { echo -e "$(RED)❌ Docker Compose v2 is required$(NC)"; exit 1; }
-	@command -v python3 >/dev/null 2>&1 || { echo -e "$(RED)❌ Python 3 is required$(NC)"; exit 1; }
-	@command -v npm >/dev/null 2>&1 || { echo -e "$(RED)❌ npm is required$(NC)"; exit 1; }
-	@echo -e "$(GREEN)✅ All requirements met$(NC)"
+	@MISSING_TOOLS=""; \
+	command -v docker >/dev/null 2>&1 || MISSING_TOOLS="$$MISSING_TOOLS docker"; \
+	docker compose version >/dev/null 2>&1 || MISSING_TOOLS="$$MISSING_TOOLS docker-compose-v2"; \
+	command -v python3 >/dev/null 2>&1 || MISSING_TOOLS="$$MISSING_TOOLS python3"; \
+	command -v npm >/dev/null 2>&1 || MISSING_TOOLS="$$MISSING_TOOLS npm"; \
+	command -v lsof >/dev/null 2>&1 || MISSING_TOOLS="$$MISSING_TOOLS lsof"; \
+	command -v jq >/dev/null 2>&1 || MISSING_TOOLS="$$MISSING_TOOLS jq"; \
+	if [ -n "$$MISSING_TOOLS" ]; then \
+		echo -e "$(RED)❌ Missing required tools:$$MISSING_TOOLS$(NC)"; \
+		exit 1; \
+	fi; \
+	echo -e "$(GREEN)✅ All requirements met$(NC)"
 
 .PHONY: check-ports
 check-ports: ## Check if required ports are available
 	@echo -e "$(YELLOW)Checking port availability...$(NC)"
-	@for port in $(REQUIRED_PORTS); do \
+	@# Check backend ports (must be available)
+	@for port in $(API_PORT) $(CHROMA_GATEWAY_PORT) 11434; do \
 		if lsof -i :$$port >/dev/null 2>&1; then \
 			echo -e "$(RED)❌ Port $$port is in use$(NC)"; \
 			lsof -i :$$port | grep LISTEN | head -1; \
@@ -338,6 +411,53 @@ check-ports: ## Check if required ports are available
 			echo -e "$(GREEN)✅ Port $$port available$(NC)"; \
 		fi \
 	done
+	@# Check frontend port (interactive handling)
+	@$(MAKE) check-frontend-port
+
+.PHONY: check-frontend-port
+check-frontend-port: ## Check if frontend port is available with interactive handling
+	@set +e; \
+	PORT_IN_USE=false; \
+	if ss -tlnp 2>/dev/null | grep -q ":$(FRONTEND_PORT)\s" || lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
+		PORT_IN_USE=true; \
+	fi; \
+	if [ "$$PORT_IN_USE" = "true" ]; then \
+		echo -e "$(YELLOW)⚠️  Port $(FRONTEND_PORT) is in use$(NC)"; \
+		lsof -i :$(FRONTEND_PORT) | grep LISTEN | head -1 || true; \
+		echo -e ""; \
+		echo -e "Options:"; \
+		echo -e "  1) Stop frontend and retry"; \
+		echo -e "  2) Proceed without starting frontend"; \
+		echo -e "  3) Skip check and attempt to start anyway"; \
+		echo -e ""; \
+		read -p "Select option [1-3]: " -r choice; \
+		if [ "$$choice" = "1" ]; then \
+			echo -e "$(YELLOW)Attempting to stop frontend...$(NC)"; \
+			if [ -f .frontend.pid ] && kill -0 $$(cat .frontend.pid) 2>/dev/null; then \
+				kill $$(cat .frontend.pid) 2>/dev/null || true; \
+				rm -f .frontend.pid; \
+				echo -e "$(GREEN)Frontend stopped. Retrying...$(NC)"; \
+				sleep 2; \
+				$(MAKE) check-frontend-port; \
+			else \
+				echo -e "$(YELLOW)Please manually terminate the service using port $(FRONTEND_PORT)$(NC)"; \
+				echo -e "$(YELLOW)Then run 'make dev' again$(NC)"; \
+				exit 1; \
+			fi; \
+		elif [ "$$choice" = "2" ]; then \
+			echo -e "$(YELLOW)Proceeding without frontend...$(NC)"; \
+			echo "SKIP_FRONTEND=true" > .frontend.skip; \
+		elif [ "$$choice" = "3" ]; then \
+			echo -e "$(YELLOW)Skipping port check...$(NC)"; \
+			rm -f .frontend.skip; \
+		else \
+			echo -e "$(RED)Invalid choice. Exiting.$(NC)"; \
+			exit 1; \
+		fi; \
+	else \
+		echo -e "$(GREEN)✅ Port $(FRONTEND_PORT) available$(NC)"; \
+		rm -f .frontend.skip; \
+	fi
 
 .PHONY: troubleshoot
 troubleshoot: ## Interactive troubleshooting guide
@@ -377,6 +497,22 @@ logs-ollama: ## View Ollama logs
 # INTERNAL HELPERS (not shown in help)
 # ========================================================================
 
+# Simple shell functions for port detection
+.PHONY: _check_port_in_use
+_check_port_in_use:
+	@ss -tlnp 2>/dev/null | grep -q ":$$PORT\s" || \
+	lsof -i :$$PORT -sTCP:LISTEN >/dev/null 2>&1 || \
+	lsof -i4 :$$PORT -sTCP:LISTEN >/dev/null 2>&1 || \
+	lsof -i6 :$$PORT -sTCP:LISTEN >/dev/null 2>&1
+
+.PHONY: _get_port_pid
+_get_port_pid:
+	@ss -tlnp 2>/dev/null | grep ":$$PORT\s" | grep -oP 'pid=\K[0-9]+' | head -1 || \
+	lsof -i :$$PORT -sTCP:LISTEN -t 2>/dev/null | head -1 || \
+	lsof -i4 :$$PORT -sTCP:LISTEN -t 2>/dev/null | head -1 || \
+	lsof -i6 :$$PORT -sTCP:LISTEN -t 2>/dev/null | head -1 || \
+	echo ""
+
 .PHONY: ensure-env-files
 ensure-env-files:
 	@if [ ! -f .env ]; then \
@@ -402,13 +538,13 @@ setup-backend:
 
 .PHONY: wait-for-services
 wait-for-services:
-	@echo -n "Waiting for services to be healthy"
-	@SERVICES="backend chromadb ollama"; \
-	for i in {1..60}; do \
+	@echo -e "Waiting for services to be healthy..."
+	@timeout=60; \
+	elapsed=0; \
+	while [ $$elapsed -lt $$timeout ]; do \
 		ALL_HEALTHY=true; \
-		for service in $$SERVICES; do \
-			HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' $$(docker compose ps -q $$service 2>/dev/null) 2>/dev/null || echo "not-running"); \
-			if [ "$$HEALTH" != "healthy" ]; then \
+		for service in backend chromadb ollama; do \
+			if ! docker compose ps $$service --format json 2>/dev/null | jq -e '.Health == "healthy"' >/dev/null 2>&1; then \
 				ALL_HEALTHY=false; \
 				break; \
 			fi; \
@@ -418,25 +554,56 @@ wait-for-services:
 			echo -e "$(GREEN)✅ All services healthy$(NC)"; \
 			break; \
 		fi; \
+		if [ $$elapsed -eq 0 ]; then \
+			echo -n "Waiting"; \
+		fi; \
 		echo -n "."; \
 		sleep 2; \
-		if [ $$i -eq 60 ]; then \
+		elapsed=$$((elapsed + 2)); \
+		if [ $$elapsed -ge $$timeout ]; then \
 			echo ""; \
-			echo -e "$(YELLOW)⚠️  Some services may not be fully healthy$(NC)"; \
+			echo -e "$(YELLOW)⚠️  Timeout waiting for services$(NC)"; \
 			echo -e "Check status with: $(GREEN)make health-detailed$(NC)"; \
 		fi; \
 	done
 
 .PHONY: start-frontend-background
 start-frontend-background:
-	@if [ -f .frontend.pid ] && kill -0 $$(cat .frontend.pid) 2>/dev/null; then \
-		echo -e "$(GREEN)✅ Frontend already running$(NC)"; \
+	@if [ -f .frontend.skip ]; then \
+		echo -e "$(YELLOW)⚠️  Skipping frontend startup (port $(FRONTEND_PORT) was in use)$(NC)"; \
+		echo -e "$(YELLOW)To start frontend manually later: cd $(FRONTEND_DIR) && npm run dev$(NC)"; \
+	elif [ -f .frontend.pid ]; then \
+		PID=$$(cat .frontend.pid); \
+		if kill -0 $$PID 2>/dev/null && ps -p $$PID -o comm= 2>/dev/null | grep -q "npm"; then \
+			echo -e "$(GREEN)✅ Frontend already running (PID: $$PID)$(NC)"; \
+		else \
+			echo -e "$(YELLOW)⚠️  Stale PID file detected, cleaning up...$(NC)"; \
+			rm -f .frontend.pid; \
+			$(MAKE) start-frontend-background; \
+		fi; \
 	else \
 		echo -e "$(YELLOW)Starting frontend...$(NC)"; \
-		cd $(FRONTEND_DIR) && nohup npm run dev > ../../frontend.log 2>&1 & echo $$! > ../../.frontend.pid; \
-		sleep 5; \
+		rm -f .frontend.pid; \
+		cd $(FRONTEND_DIR) && nohup npm run dev > ../../frontend.log 2>&1 & \
+		FRONTEND_PID=$$!; \
+		echo $$FRONTEND_PID > ../../.frontend.pid; \
+		echo -e "$(BLUE)Frontend process started with PID: $$FRONTEND_PID$(NC)"; \
+		cd ../..; \
+		sleep 3; \
 		if [ -f .frontend.pid ] && kill -0 $$(cat .frontend.pid) 2>/dev/null; then \
-			echo -e "$(GREEN)✅ Frontend started$(NC)"; \
+			echo -e "$(YELLOW)Waiting for frontend to be ready...$(NC)"; \
+			for i in {1..10}; do \
+				if ss -tlnp 2>/dev/null | grep -q ":$(FRONTEND_PORT)\s" || lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
+					echo -e "$(GREEN)✅ Frontend started (PID: $$(cat .frontend.pid))$(NC)"; \
+					echo -e "$(GREEN)   URL: http://localhost:$(FRONTEND_PORT)$(NC)"; \
+					break; \
+				fi; \
+				sleep 1; \
+			done; \
+			if ! ss -tlnp 2>/dev/null | grep -q ":$(FRONTEND_PORT)\s" && ! lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
+				echo -e "$(YELLOW)⚠️  Frontend process running but port not ready$(NC)"; \
+				echo -e "$(YELLOW)   Check logs: tail -f frontend.log$(NC)"; \
+			fi; \
 		else \
 			echo -e "$(RED)❌ Frontend failed to start$(NC)"; \
 			[ -f frontend.log ] && tail -20 frontend.log; \
@@ -446,18 +613,116 @@ start-frontend-background:
 .PHONY: stop-frontend
 stop-frontend:
 	@if [ -f .frontend.pid ]; then \
-		kill $$(cat .frontend.pid) 2>/dev/null || true; \
+		FRONTEND_PID=$$(cat .frontend.pid); \
+		if kill -0 $$FRONTEND_PID 2>/dev/null; then \
+			echo -e "$(YELLOW)Stopping frontend (PID: $$FRONTEND_PID)...$(NC)"; \
+			pkill -P $$FRONTEND_PID 2>/dev/null || true; \
+			kill $$FRONTEND_PID 2>/dev/null || true; \
+			sleep 2; \
+			if kill -0 $$FRONTEND_PID 2>/dev/null; then \
+				echo -e "$(YELLOW)Frontend still running, sending SIGKILL...$(NC)"; \
+				pkill -9 -P $$FRONTEND_PID 2>/dev/null || true; \
+				kill -9 $$FRONTEND_PID 2>/dev/null || true; \
+			fi; \
+			echo -e "$(GREEN)✅ Frontend stopped$(NC)"; \
+		else \
+			echo -e "$(YELLOW)Frontend PID $$FRONTEND_PID not found (already stopped)$(NC)"; \
+		fi; \
 		rm -f .frontend.pid; \
-		echo -e "$(GREEN)✅ Frontend stopped$(NC)"; \
+	else \
+		echo -e "$(YELLOW)No frontend PID file found$(NC)"; \
+		EXTERNAL_PID=$$(ss -tlnp 2>/dev/null | grep ":$(FRONTEND_PORT)\s" | grep -oP 'pid=\K[0-9]+' | head -1 || lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN -t 2>/dev/null | head -1); \
+		if [ -n "$$EXTERNAL_PID" ]; then \
+			echo -e "$(YELLOW)Found externally managed frontend (PID: $$EXTERNAL_PID)$(NC)"; \
+			echo -e "$(YELLOW)To stop it, run: kill $$EXTERNAL_PID$(NC)"; \
+		fi; \
+	fi
+	@rm -f .frontend.skip
+
+.PHONY: kill-frontend
+kill-frontend: ## Force kill any process using the frontend port
+	@echo -e "$(YELLOW)Looking for processes on port $(FRONTEND_PORT)...$(NC)"
+	@PIDS=$$(ss -tlnp 2>/dev/null | grep ":$(FRONTEND_PORT)\s" | grep -oP 'pid=\K[0-9]+' | head -1 || lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN -t 2>/dev/null | head -1); \
+	if [ -n "$$PIDS" ]; then \
+		echo -e "$(YELLOW)Found process(es): $$PIDS$(NC)"; \
+		for pid in $$PIDS; do \
+			PROCESS_INFO=$$(ps -p $$pid -o comm= 2>/dev/null || echo "unknown"); \
+			echo -e "  Killing PID $$pid ($$PROCESS_INFO)..."; \
+			kill -9 $$pid 2>/dev/null || true; \
+		done; \
+		echo -e "$(GREEN)✅ Killed all processes on port $(FRONTEND_PORT)$(NC)"; \
+	else \
+		echo -e "$(GREEN)✅ No processes found on port $(FRONTEND_PORT)$(NC)"; \
+	fi
+	@rm -f .frontend.pid .frontend.skip
+
+.PHONY: check-frontend
+check-frontend: ## Detailed check of frontend status
+	@echo -e "$(BLUE)Frontend Status Check$(NC)"
+	@echo -e ""
+	@echo -e "$(YELLOW)Port $(FRONTEND_PORT) Status:$(NC)"
+	@if ss -tlnp 2>/dev/null | grep -q ":$(FRONTEND_PORT)\s" || lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN >/dev/null 2>&1; then \
+		echo -e "  $(GREEN)✅ Port is in use$(NC)"; \
+		echo -e ""; \
+		echo -e "$(YELLOW)Process Details:$(NC)"; \
+		ss -tlnp 2>/dev/null | grep :$(FRONTEND_PORT) || \
+		lsof -i :$(FRONTEND_PORT) -P 2>/dev/null | grep -v "^COMMAND" || \
+		lsof -i4 :$(FRONTEND_PORT) -P 2>/dev/null | grep -v "^COMMAND" || \
+		lsof -i6 :$(FRONTEND_PORT) -P 2>/dev/null | grep -v "^COMMAND" || true; \
+		echo -e ""; \
+		PID=$$(ss -tlnp 2>/dev/null | grep ":$(FRONTEND_PORT)\s" | grep -oP 'pid=\K[0-9]+' | head -1 || lsof -i :$(FRONTEND_PORT) -sTCP:LISTEN -t 2>/dev/null | head -1); \
+		if [ -n "$$PID" ]; then \
+			echo -e "$(YELLOW)Process Info (PID $$PID):$(NC)"; \
+			ps -p $$PID -o pid,ppid,user,comm,args | tail -n +2 || true; \
+		fi; \
+	else \
+		echo -e "  $(RED)❌ Port is not in use$(NC)"; \
+	fi
+	@echo -e ""
+	@echo -e "$(YELLOW)Frontend Management Files:$(NC)"
+	@if [ -f .frontend.pid ]; then \
+		echo -e "  .frontend.pid exists (PID: $$(cat .frontend.pid))"; \
+		if kill -0 $$(cat .frontend.pid) 2>/dev/null; then \
+			echo -e "    $(GREEN)Process is running$(NC)"; \
+		else \
+			echo -e "    $(RED)Process is NOT running (stale PID file)$(NC)"; \
+		fi; \
+	else \
+		echo -e "  .frontend.pid: $(YELLOW)Not found$(NC)"; \
+	fi
+	@if [ -f .frontend.skip ]; then \
+		echo -e "  .frontend.skip: $(YELLOW)Exists (frontend was skipped)$(NC)"; \
+	else \
+		echo -e "  .frontend.skip: Not found"; \
 	fi
 
 .PHONY: show-status
 show-status:
 	@echo -e "$(GREEN)Services running at:$(NC)"
-	@echo -e "  Frontend:    http://localhost:$(FRONTEND_PORT)"
+	@if [ -f .frontend.skip ]; then \
+		echo -e "  Frontend:    $(YELLOW)Skipped (port $(FRONTEND_PORT) was in use)$(NC)"; \
+	else \
+		echo -e "  Frontend:    http://localhost:$(FRONTEND_PORT)"; \
+	fi
 	@echo -e "  Backend API: http://localhost:$(API_PORT)"
 	@echo -e "  API Docs:    http://localhost:$(API_PORT)/docs"
 	@echo -e "  ChromaDB:    http://localhost:$(CHROMA_GATEWAY_PORT)"
+
+.PHONY: check-models
+check-models: ## Check which Ollama models are installed
+	@echo -e "$(YELLOW)Checking Ollama models...$(NC)"
+	@OLLAMA_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' $$(docker compose ps -q ollama 2>/dev/null) 2>/dev/null || echo "not-running"); \
+	if [ "$$OLLAMA_HEALTH" != "healthy" ]; then \
+		echo -e "$(RED)❌ Cannot check models - Ollama is $$OLLAMA_HEALTH$(NC)"; \
+		exit 1; \
+	fi
+	@echo -e "$(BLUE)Installed models:$(NC)"
+	@docker compose exec ollama ollama list 2>/dev/null || echo "No models found"
+	@echo -e ""
+	@echo -e "$(BLUE)Required models:$(NC)"
+	@echo -e "  - $(YELLOW)gemma3n:e2b$(NC) (Generative model)"
+	@echo -e "  - $(YELLOW)mxbai-embed-large:latest$(NC) (Embedding model)"
+	@echo -e "  - $(YELLOW)linux6200/bge-reranker-v2-m3:latest$(NC) (Reranker model)"
 
 .PHONY: pull-models
 pull-models: ## Pull required Ollama models
@@ -469,9 +734,80 @@ pull-models: ## Pull required Ollama models
 		echo -e "Run $(GREEN)make health-detailed$(NC) for more information"; \
 		exit 1; \
 	fi
-	@docker compose exec ollama ollama pull mxbai-embed-large
-	@docker compose exec ollama ollama pull gemma2:9b
-	@echo -e "$(GREEN)✅ Models pulled$(NC)"
+	@echo -e "$(BLUE)Pulling models in parallel for faster download...$(NC)"
+	@docker compose exec -T ollama ollama pull gemma3n:e2b & \
+	docker compose exec -T ollama ollama pull mxbai-embed-large & \
+	docker compose exec -T ollama ollama pull linux6200/bge-reranker-v2-m3 & \
+	wait
+	@echo -e "$(GREEN)✅ All models pulled successfully$(NC)"
+
+.PHONY: interactive-pull-models
+interactive-pull-models: ## Interactive model pull with user prompts
+	@echo -e "$(BLUE)Ollama Model Manager$(NC)"
+	@echo -e ""
+	@# Check if Ollama is healthy
+	@OLLAMA_HEALTH=$$(docker inspect --format='{{.State.Health.Status}}' $$(docker compose ps -q ollama 2>/dev/null) 2>/dev/null || echo "not-running"); \
+	if [ "$$OLLAMA_HEALTH" != "healthy" ]; then \
+		echo -e "$(RED)❌ Cannot manage models - Ollama is $$OLLAMA_HEALTH$(NC)"; \
+		exit 1; \
+	fi
+	@# Check installed models
+	@INSTALLED_MODELS=$$(docker compose exec ollama ollama list 2>/dev/null | tail -n +2 | awk '{print $$1}' | sort | uniq || echo ""); \
+	REQUIRED_MODELS="gemma3n:e2b mxbai-embed-large:latest linux6200/bge-reranker-v2-m3:latest"; \
+	MISSING_MODELS=""; \
+	for model in $$REQUIRED_MODELS; do \
+		if ! echo "$$INSTALLED_MODELS" | grep -q "^$$model$$"; then \
+			MISSING_MODELS="$$MISSING_MODELS $$model"; \
+		fi; \
+	done; \
+	if [ -z "$$MISSING_MODELS" ]; then \
+		echo -e "$(GREEN)✅ All required models are already installed!$(NC)"; \
+		echo -e ""; \
+		docker compose exec ollama ollama list; \
+		exit 0; \
+	fi; \
+	echo -e "$(YELLOW)Missing models:$(NC)"; \
+	echo -e ""; \
+	n=1; \
+	for model in $$MISSING_MODELS; do \
+		case $$model in \
+			gemma3n:e2b) \
+				echo -e "  $$n) $(YELLOW)$$model$(NC) - Generative AI model (for chat responses)" ;; \
+			mxbai-embed-large) \
+				echo -e "  $$n) $(YELLOW)$$model$(NC) - Embedding model (for document search)" ;; \
+			linux6200/bge-reranker-v2-m3) \
+				echo -e "  $$n) $(YELLOW)$$model$(NC) - Reranker model (for search result ranking)" ;; \
+		esac; \
+		n=$$((n+1)); \
+	done; \
+	echo -e "  A) Pull all missing models"; \
+	echo -e "  S) Skip for now"; \
+	echo -e ""; \
+	read -p "Select option(s) [1-$$((n-1)), A, or S]: " -r choice; \
+	if [[ "$$choice" =~ ^[Ss]$$ ]]; then \
+		echo -e "$(YELLOW)Skipping model pull. Note: Synapse may not function properly without all models.$(NC)"; \
+		exit 0; \
+	elif [[ "$$choice" =~ ^[Aa]$$ ]]; then \
+		echo -e "$(YELLOW)Pulling all missing models...$(NC)"; \
+		for model in $$MISSING_MODELS; do \
+			echo -e "$(BLUE)Pulling $$model...$(NC)"; \
+			docker compose exec ollama ollama pull $$model || echo -e "$(RED)Failed to pull $$model$(NC)"; \
+		done; \
+	else \
+		n=1; \
+		for model in $$MISSING_MODELS; do \
+			if [[ "$$choice" =~ $$n ]]; then \
+				echo -e "$(BLUE)Pulling $$model...$(NC)"; \
+				docker compose exec ollama ollama pull $$model || echo -e "$(RED)Failed to pull $$model$(NC)"; \
+			fi; \
+			n=$$((n+1)); \
+		done; \
+	fi; \
+	echo -e ""; \
+	echo -e "$(GREEN)✅ Model management complete$(NC)"; \
+	echo -e ""; \
+	echo -e "$(BLUE)Currently installed models:$(NC)"; \
+	docker compose exec ollama ollama list
 
 # ========================================================================
 # DEVELOPMENT SHORTCUTS

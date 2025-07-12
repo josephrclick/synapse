@@ -18,7 +18,6 @@ jupyter-notebooks/
 .pytest_cache/
 .cursor/
 .claude/
-docs/reference/private/
 synapse.db
 backups/
-docs/
+.private/

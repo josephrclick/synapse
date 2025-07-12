@@ -209,16 +209,18 @@ def create_chroma_document_store() -> ChromaDocumentStore:
         RuntimeError: If connection to ChromaDB fails after retries
     """
     try:
-        # Construct ChromaDB URL
-        chroma_url = f"http://{settings.chroma_host}:{settings.chroma_port}"
-        
-        logger.info(f"Connecting to ChromaDB at {chroma_url}")
-        
         # Initialize document store
+        # For chroma-haystack 0.15.0, we need to set the persist_path to None
+        # and use environment variables for the connection
+        import os
+        os.environ["CHROMA_SERVER_HOST"] = settings.chroma_host
+        os.environ["CHROMA_SERVER_HTTP_PORT"] = str(settings.chroma_port)
+        
+        logger.info(f"Connecting to ChromaDB at {settings.chroma_host}:{settings.chroma_port}")
+        
         document_store = ChromaDocumentStore(
             collection_name=settings.chroma_collection_name,
-            host=settings.chroma_host,
-            port=settings.chroma_port
+            persist_path=None  # Use remote ChromaDB instance
         )
         
         # Test connection by attempting to count documents

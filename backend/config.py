@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     # Model Names
     generative_model: str = Field(default="gemma3n:e2b", description="Generative model name")
     embedding_model: str = Field(default="mxbai-embed-large", description="Embedding model name")
-    reranker_model: str = Field(default="BAAI/bge-reranker-v2-m3", description="Reranker model name")
+    reranker_model: str = Field(default="BAAI/linux6200/bge-reranker-v2-m3", description="Reranker model name")
     
     # Ollama Configuration
     ollama_base_url: str = Field(default="http://host.docker.internal:11434", description="Ollama API base URL")

@@ -1,0 +1,129 @@
+/**
+ * Manual WebSocket implementation for Deepgram
+ * Works around SDK issues with browser WebSocket authentication
+ */
+
+export interface DeepgramConfig {
+  apiKey: string;
+  model?: string;
+  language?: string;
+  encoding?: string;
+  sampleRate?: number;
+  [key: string]: any;
+}
+
+export class DeepgramWebSocket {
+  private ws: WebSocket | null = null;
+  private config: DeepgramConfig;
+  private listeners: Map<string, Function[]> = new Map();
+
+  constructor(config: DeepgramConfig) {
+    this.config = config;
+  }
+
+  connect() {
+    const params = new URLSearchParams({
+      model: this.config.model || 'nova-2',
+      language: this.config.language || 'en-US',
+      encoding: this.config.encoding || 'webm-opus',
+      sample_rate: String(this.config.sampleRate || 16000),
+      smart_format: 'true',
+      punctuate: 'true',
+      utterances: 'true',
+      interim_results: 'true',
+      utterance_end_ms: '1000',
+      vad_events: 'true',
+      endpointing: '300',
+    });
+
+    // Try different authentication methods
+    // Method 1: Token in query parameter
+    const wsUrl = `wss://api.deepgram.com/v1/listen?${params.toString()}`;
+    
+    console.log('[DeepgramWebSocket] Attempting to connect to:', wsUrl);
+    
+    try {
+      // Method 2: Use subprotocol for authentication
+      // Deepgram expects the token in a specific format
+      this.ws = new WebSocket(wsUrl, ['token', this.config.apiKey]);
+    } catch (error) {
+      console.error('[DeepgramWebSocket] Failed to create WebSocket:', error);
+      this.emit('error', error);
+      return;
+    }
+    
+    this.ws.onopen = () => {
+      this.emit('open');
+    };
+
+    this.ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        this.emit('transcript', data);
+      } catch (error) {
+        console.error('Error parsing Deepgram message:', error);
+      }
+    };
+
+    this.ws.onerror = (error) => {
+      console.error('[DeepgramWebSocket] WebSocket error:', error);
+      console.error('[DeepgramWebSocket] Ready state:', this.ws?.readyState);
+      // The error event doesn't provide much detail, but we can infer from the ready state
+      const errorDetails = {
+        ...error,
+        readyState: this.ws?.readyState,
+        readyStateText: this.getReadyStateText(),
+        url: wsUrl
+      };
+      this.emit('error', errorDetails);
+    };
+
+    this.ws.onclose = (event) => {
+      console.log('[DeepgramWebSocket] Connection closed:', {
+        code: event.code,
+        reason: event.reason || 'No reason provided',
+        wasClean: event.wasClean
+      });
+      this.emit('close', event);
+    };
+  }
+
+  send(data: Blob | ArrayBuffer) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(data);
+    }
+  }
+
+  close() {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+
+  getReadyState(): number {
+    return this.ws ? this.ws.readyState : WebSocket.CLOSED;
+  }
+
+  on(event: string, callback: Function) {
+    if (!this.listeners.has(event)) {
+      this.listeners.set(event, []);
+    }
+    this.listeners.get(event)!.push(callback);
+  }
+
+  private emit(event: string, data?: any) {
+    const callbacks = this.listeners.get(event) || [];
+    callbacks.forEach(callback => callback(data));
+  }
+
+  private getReadyStateText(): string {
+    switch (this.ws?.readyState) {
+      case WebSocket.CONNECTING: return 'CONNECTING';
+      case WebSocket.OPEN: return 'OPEN';
+      case WebSocket.CLOSING: return 'CLOSING';
+      case WebSocket.CLOSED: return 'CLOSED';
+      default: return 'UNKNOWN';
+    }
+  }
+}

@@ -40,10 +40,10 @@ services:
           memory: 512M
 
   chromadb:
-    image: chromadb/chroma:0.5.23
+    image: chromadb/chroma:0.4.24
     container_name: synapse_chromadb
     profiles:
-      - ""  # Default profile (always active)
+      - ""
       - development
       - production
     ports:
@@ -54,55 +54,46 @@ services:
       - chroma_data:/chroma/chroma
     environment:
       - IS_PERSISTENT=TRUE
-      - ALLOW_RESET=${CHROMADB_ALLOW_RESET:-TRUE}  # Set to FALSE in production
+      - ALLOW_RESET=${CHROMADB_ALLOW_RESET:-TRUE}
+      - ANONYMIZED_TELEMETRY=FALSE
     networks:
       - synapse-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v2/heartbeat"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/v1')"]
       interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 2G
-        reservations:
-          cpus: '0.25'
-          memory: 512M
+      timeout: 30s
+      retries: 5
+      start_period: 120s  
 
-  # NEW: Containerized Ollama service
   ollama:
     image: ollama/ollama:latest
+    container_name: synapse_ollama
     profiles:
-      - ""  # Default profile (always active)
+      - ""
       - development
       - production
     ports:
-      - "11434:11434"
+      - "${OLLAMA_PORT:-11434}:11434"
     volumes:
       - ollama_data:/root/.ollama
-    environment:
-      - OLLAMA_HOST=0.0.0.0:11434
     networks:
       - synapse-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "ollama", "list"]
+      test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 30s
       timeout: 10s
-      retries: 5
-      start_period: 60s
+      retries: 3
+      start_period: 40s
     deploy:
       resources:
         limits:
           cpus: '4'
-          memory: 4G
+          memory: 8G
         reservations:
           cpus: '1'
-          memory: 1G
+          memory: 2G
 
   # Debug service for troubleshooting
   debug:

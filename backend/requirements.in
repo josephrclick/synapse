@@ -9,33 +9,37 @@
 # To upgrade a specific package:
 #   pip-compile --upgrade-package <package-name> backend/requirements.in -o backend/requirements.txt
 
-# Core API Framework (allow minor updates for security/performance)
-fastapi>=0.115.0,<1.0.0
+# Core API Framework (allow minor updates for security/performance)fastapi>=0.115.0,<1.0.0
 uvicorn[standard]>=0.32.0,<1.0.0
 
-# Data Validation (major update needed - test carefully!)
-# NOTE: Upgrading from 2.5.3 -> 2.11.x - test thoroughly for breaking changes
+# Data Validation
 pydantic>=2.11.0,<3.0.0
 pydantic-settings>=2.1.0,<3.0.0
 
-# Environment & Configuration (very stable)
+# Environment & Configuration
 python-dotenv>=1.0.0
 
-# HTTP Client (stable API)
+# HTTP Client
 httpx>=0.27.0
 
-# File Upload Support (simple utility)
+# File Upload Support
 python-multipart>=0.0.6
 
-# AI/ML Pipeline Components (using current working versions)
-# NOTE: ollama-haystack and chroma-haystack had major version jumps
+# AI/ML Pipeline Components
 haystack-ai>=2.0,<3.0
-ollama-haystack>=1.1.0,<4.0.0    # Currently 1.1.0, allow to 3.x
-chroma-haystack>=3.3.0,<4.0.0    # Currently 3.3.0, allow patches
+ollama-haystack>=1.1.0,<4.0.0
 
-# Database Support (stable)
+# ChromaDB - Pin to compatible versions
+# Using chroma-haystack 0.15.0 which works with chromadb 0.4.x
+chroma-haystack==0.15.0
+chromadb<0.4.20
+
+# Database Support
 databases[aiosqlite]>=0.8.0
 aiosqlite>=0.20.0
 
-# Text Processing (new addition - was missing)
+# Text Processing
 nltk>=3.9.1
+
+# NumPy - Pin to 1.x for ChromaDB 0.4.x compatibility
+numpy<2.0.0

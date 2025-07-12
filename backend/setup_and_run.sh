@@ -128,7 +128,7 @@ DATABASE_URL=sqlite:///synapse.db
 OLLAMA_BASE_URL=http://localhost:11434
 EMBEDDING_MODEL=mxbai-embed-large
 GENERATIVE_MODEL=gemma3n:e2b
-RERANKER_MODEL=BAAI/bge-reranker-v2-m3
+RERANKER_MODEL=BAAI/linux6200/bge-reranker-v2-m3
 
 # ChromaDB Configuration
 CHROMA_HOST=localhost

@@ -61,7 +61,7 @@ export default function ChatWindow() {
   }, []);
 
   return (
-    <div className="flex flex-col h-full max-w-4xl mx-auto p-4">
+    <div className="flex flex-col h-full p-4">
       <header className="mb-4 text-center flex-shrink-0">
         <div className="flex items-center justify-center space-x-2 mb-2">
           <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
