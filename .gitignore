@@ -21,3 +21,4 @@ jupyter-notebooks/
 synapse.db
 backups/
 .private/
+.ruff_cache/
