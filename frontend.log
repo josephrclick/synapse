@@ -8,34 +8,21 @@
    - Environments: .env.local, .env
 
  ✓ Starting...
- ✓ Ready in 754ms
+ ✓ Ready in 966ms
  ○ Compiling / ...
- ✓ Compiled / in 1867ms
- GET / 200 in 2261ms
- ✓ Compiled /api/chat in 354ms
-Backend URL: http://localhost:8101
-API Key configured: Yes
-Backend response status: 500
-Backend response headers: {
-  'content-length': '60',
-  'content-type': 'application/json',
-  date: 'Sat, 12 Jul 2025 00:37:29 GMT',
-  server: 'uvicorn',
-  'x-request-id': '894e2031-a7cc-4640-a267-3d69250c8858'
-}
-Backend error response: {"detail":"Failed to process chat query. Please try again."}
- POST /api/chat 500 in 1382ms
+ ✓ Compiled / in 1729ms
+ GET / 200 in 2045ms
+ ✓ Compiled / in 41ms
+ GET / 200 in 129ms
+ ✓ Compiled in 127ms
+ GET / 200 in 87ms
+ GET / 200 in 34ms
+ GET / 200 in 30ms
+ GET / 200 in 29ms
+   Reload env: .env
+ GET / 200 in 153ms
+ GET / 200 in 224ms
  ○ Compiling /_not-found/page ...
- ✓ Compiled /_not-found/page in 766ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 824ms
- GET / 200 in 85ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 160ms
- ✓ Compiled /favicon.ico in 435ms
- GET /favicon.ico?favicon.45db1c09.ico 200 in 677ms
- ✓ Compiled in 110ms
- GET / 200 in 292ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 109ms
- GET /favicon.ico?favicon.45db1c09.ico 200 in 231ms
- GET / 200 in 89ms
- GET /.well-known/appspecific/com.chrome.devtools.json 404 in 76ms
- GET /favicon.ico?favicon.45db1c09.ico 200 in 224ms
+ ✓ Compiled /_not-found/page in 619ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 670ms
+[?25h

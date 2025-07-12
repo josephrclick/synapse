@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { documentSchema, documentTypes, type DocumentFormData } from '@/app/lib/schemas';
+import { documentFormSchema, documentTypes, type DocumentFormData } from '@/app/lib/schemas';
 
 interface IngestFormProps {
   submitAction: (formData: FormData) => Promise<{ success: boolean; message: string; docId?: string }>;
@@ -22,7 +22,7 @@ export default function IngestForm({ submitAction }: IngestFormProps) {
     formState: { errors },
     reset,
   } = useForm<DocumentFormData>({
-    resolver: zodResolver(documentSchema),
+    resolver: zodResolver(documentFormSchema),
     defaultValues: {
       type: 'general_note',
       tags: '',

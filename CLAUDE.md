@@ -54,9 +54,10 @@ docker compose ps       # Check container status
 - `docker-entrypoint.sh` - Container startup script
 
 ### Frontend (`/frontend/synapse`)
-- `app/page.tsx` - Chat interface
+- `app/page.tsx` - Chat interface (includes voice transcription)
 - `app/ingest/page.tsx` - Document ingestion
 - `app/components/chat/` - Chat UI components
+- `app/components/voice/` - Voice transcription components
 - `app/lib/chat-service.ts` - Backend API client
 - `app/lib/chat-reducer.ts` - State management
 
@@ -99,6 +100,7 @@ FRONTEND_PORT=8100
 API_PORT=8101
 CHROMA_GATEWAY_PORT=8102
 BACKEND_API_KEY=test-api-key-123
+INTERNAL_API_KEY=test-api-key-123
 ```
 
 ### Backend `.env`

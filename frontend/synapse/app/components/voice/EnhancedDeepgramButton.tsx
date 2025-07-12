@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { DeepgramWebSocket } from './DeepgramWebSocket';
+import { createClient, LiveTranscriptionEvents, LiveClient } from '@deepgram/sdk';
 
 /**
  * EnhancedDeepgramButton - Voice transcription with auto-clipboard functionality
@@ -42,7 +42,7 @@ export default function EnhancedDeepgramButton() {
 
   // Refs to hold our instances
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const connectionRef = useRef<DeepgramWebSocket | null>(null);
+  const connectionRef = useRef<LiveClient | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const isFinalsRef = useRef<string[]>([]);
   const clipboardTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,9 +54,9 @@ export default function EnhancedDeepgramButton() {
   useEffect(() => {
     const checkSupport = 
       typeof window !== 'undefined' &&
-      navigator.mediaDevices?.getUserMedia &&
-      window.MediaRecorder &&
-      navigator.clipboard;
+      !!navigator.mediaDevices?.getUserMedia &&
+      !!window.MediaRecorder &&
+      !!navigator.clipboard;
     
     setIsSupported(!!checkSupport);
     
@@ -77,15 +77,17 @@ export default function EnhancedDeepgramButton() {
       }
       
       if (connectionRef.current) {
-        connectionRef.current.close();
+        connectionRef.current.requestClose();
       }
 
       if (clipboardTimeoutRef.current) {
         clearTimeout(clipboardTimeoutRef.current);
       }
 
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
+      // Copy ref value to avoid React warning
+      const retryTimeout = retryTimeoutRef.current;
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
       }
     };
   }, []);
@@ -357,26 +359,29 @@ export default function EnhancedDeepgramButton() {
       
       mediaRecorderRef.current = mediaRecorder;
 
-      // Initialize Deepgram connection
+      // Initialize Deepgram client
       const apiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY;
       if (!apiKey) {
         throw new Error('Deepgram API key not found in environment variables');
       }
 
-      // Create manual WebSocket connection to work around SDK browser issues
-      const connection = new DeepgramWebSocket({
-        apiKey,
+      const deepgram = createClient(apiKey);
+      
+      // Create live transcription connection with optimized settings
+      const connection = deepgram.listen.live({
         model: 'nova-2',
         language: 'en-US',
-        encoding: 'webm-opus',
-        sampleRate: 16000,
+        smart_format: true,
+        punctuate: true,
+        utterances: true,
+        interim_results: true,
+        utterance_end_ms: 1000,
+        vad_events: true,
+        endpointing: 300,
       });
 
       connectionRef.current = connection;
       console.log('[startRecording] Deepgram connection created');
-      
-      // Connect the WebSocket
-      connection.connect();
 
       // Buffer to store audio chunks while waiting for connection
       const audioBuffer: Blob[] = [];
@@ -395,7 +400,7 @@ export default function EnhancedDeepgramButton() {
           
           if (connectionRef.current && connectionRef.current.getReadyState() === 1) {
             // Connection is open, send data directly
-            console.log('[ondataavailable] Sending directly to Deepgram, readyState:', connectionRef.current.getReadyState());
+            console.log('[ondataavailable] Sending directly to Deepgram');
             try {
               connectionRef.current.send(event.data);
               console.log('[ondataavailable] Successfully sent audio chunk to Deepgram');
@@ -424,7 +429,7 @@ export default function EnhancedDeepgramButton() {
       setIsRecording(true);
 
       // Set up connection event handlers
-      connection.on('open', () => {
+      connection.on(LiveTranscriptionEvents.Open, () => {
         console.log('[Deepgram Open] Connection opened, readyState:', connection.getReadyState());
         setConnectionStatus('connected');
         
@@ -456,21 +461,24 @@ export default function EnhancedDeepgramButton() {
       });
 
       // Handle transcription results
-      connection.on('transcript', (data) => {
+      connection.on(LiveTranscriptionEvents.Transcript, (data) => {
         console.log('[Transcript event] Received transcript data:', data);
         
-        // Handle different response types from Deepgram
+        // Handle the 'Results' type format
         if (data.type === 'Results' && data.channel) {
           const sentence = data.channel.alternatives[0].transcript;
           
+          // Ignore empty transcripts
           if (sentence.length === 0) {
             return;
           }
 
           if (data.is_final) {
+            // Collect final transcripts
             isFinalsRef.current.push(sentence);
             setInterimTranscript(''); // Clear interim when we get finals
             
+            // Speech final means end of utterance detected
             if (data.speech_final) {
               const utterance = isFinalsRef.current.join(' ');
               console.log('[Transcript] Final utterance:', utterance);
@@ -489,38 +497,35 @@ export default function EnhancedDeepgramButton() {
             console.log('[Transcript] Interim:', sentence);
             setInterimTranscript(sentence);
           }
-        } else if (data.type === 'UtteranceEnd') {
-          // Handle utterance end
-          if (isFinalsRef.current.length > 0) {
-            const utterance = isFinalsRef.current.join(' ');
-            setTranscript(prev => prev ? `${prev} ${utterance}` : utterance);
-            
-            // Add timestamp if enabled
-            if (enableTimestamps && recordingStartTime) {
-              const timestamp = formatTimestamp(Date.now() - recordingStartTime);
-              setTranscriptWithTimestamps(prev => [...prev, { text: utterance, timestamp }]);
-            }
-            
-            isFinalsRef.current = [];
-          }
-          setInterimTranscript(''); // Clear any remaining interim
-        } else if (data.type === 'SpeechStarted') {
-          // Handle VAD events to see if speech is detected
-          console.log('[VAD] Speech started detected');
-        } else if (data.type === 'Metadata') {
-          console.log('[Deepgram Metadata]:', data);
         }
       });
 
+      // Handle utterance end (backup for speech_final)
+      connection.on(LiveTranscriptionEvents.UtteranceEnd, () => {
+        if (isFinalsRef.current.length > 0) {
+          const utterance = isFinalsRef.current.join(' ');
+          setTranscript(prev => prev ? `${prev} ${utterance}` : utterance);
+          
+          // Add timestamp if enabled
+          if (enableTimestamps && recordingStartTime) {
+            const timestamp = formatTimestamp(Date.now() - recordingStartTime);
+            setTranscriptWithTimestamps(prev => [...prev, { text: utterance, timestamp }]);
+          }
+          
+          isFinalsRef.current = [];
+        }
+        setInterimTranscript(''); // Clear any remaining interim
+      });
+
       // Handle errors
-      connection.on('error', (err) => {
+      connection.on(LiveTranscriptionEvents.Error, (err) => {
         console.error('Deepgram error:', err);
-        setError('Transcription error occurred');
+        setError('Transcription error occurred: ' + (err.message || 'Unknown error'));
         setConnectionStatus('error');
         stopRecording();
       });
 
-      connection.on('close', () => {
+      connection.on(LiveTranscriptionEvents.Close, () => {
         console.log('Deepgram connection closed');
         setConnectionStatus('idle');
       });
@@ -560,9 +565,8 @@ export default function EnhancedDeepgramButton() {
     }
 
     if (connectionRef.current) {
-      console.log('[stopRecording] Deepgram connection state:', connectionRef.current.getReadyState());
       console.log('[stopRecording] Closing Deepgram connection');
-      connectionRef.current.close();
+      connectionRef.current.requestClose();
       connectionRef.current = null;
     }
 

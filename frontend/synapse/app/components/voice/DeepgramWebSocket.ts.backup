@@ -44,8 +44,10 @@ export class DeepgramWebSocket {
     
     try {
       // Method 2: Use subprotocol for authentication
-      // Deepgram expects the token in a specific format
-      this.ws = new WebSocket(wsUrl, ['token', this.config.apiKey]);
+      // Deepgram expects "token" followed by the API key as a single subprotocol
+      const subprotocol = `token.${this.config.apiKey}`;
+      console.log('[DeepgramWebSocket] Using subprotocol authentication');
+      this.ws = new WebSocket(wsUrl, subprotocol);
     } catch (error) {
       console.error('[DeepgramWebSocket] Failed to create WebSocket:', error);
       this.emit('error', error);

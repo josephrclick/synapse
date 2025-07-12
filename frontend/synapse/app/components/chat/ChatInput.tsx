@@ -13,8 +13,7 @@ const chatFormSchema = z.object({
     .trim(),
   contextLimit: z.number()
     .min(1)
-    .max(20)
-    .default(5),
+    .max(20),
 });
 
 interface ChatInputProps {

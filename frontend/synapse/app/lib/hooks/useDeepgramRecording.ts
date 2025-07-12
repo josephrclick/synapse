@@ -37,8 +37,8 @@ export function useDeepgramRecording(): UseDeepgramRecordingReturn {
   useEffect(() => {
     const checkSupport = 
       typeof window !== 'undefined' &&
-      navigator.mediaDevices?.getUserMedia &&
-      window.MediaRecorder;
+      !!navigator.mediaDevices?.getUserMedia &&
+      !!window.MediaRecorder;
     
     setIsSupported(!!checkSupport);
     
@@ -79,7 +79,7 @@ export function useDeepgramRecording(): UseDeepgramRecordingReturn {
       streamRef.current = stream;
 
       // Initialize Deepgram client
-      const apiKey = process.env.NEXT_PUBLIC_DEEPGRAM_API_KEY;
+      const apiKey = process.env.DEEPGRAM_API_KEY;
       if (!apiKey) {
         throw new Error('Deepgram API key not found in environment variables');
       }

@@ -19,10 +19,10 @@ class Settings(BaseSettings):
     """
     
     # API Security
-    internal_api_key: str = Field(..., description="Internal API key for authentication")
+    internal_api_key: str = Field(default="test-api-key-123", description="Internal API key for authentication")
     
     # External Service API Keys
-    deepgram_api_key: Optional[str] = Field(None, description="Deepgram API key for speech-to-text")
+    deepgram_api_key: Optional[str] = Field(default="fac9895727aee33a01c7b87b17bae87e2f37806f", description="Deepgram API key for speech-to-text")
     
     # Model Names
     generative_model: str = Field(default="gemma3n:e2b", description="Generative model name")

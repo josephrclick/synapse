@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deepgram WebSocket Test</title>
+</head>
+<body>
+    <h1>Deepgram WebSocket Connection Test</h1>
+    <button onclick="testConnection()">Test WebSocket Connection</button>
+    <div id="output"></div>
+
+    <script>
+        function testConnection() {
+            const output = document.getElementById('output');
+            output.innerHTML = '<p>Testing connection...</p>';
+            
+            const apiKey = '9168bba67d401e3a3379a3e8afcc31adb4004ccf';
+            
+            // Test 1: Using subprotocol method (SDK v3+ method)
+            const wsUrl1 = 'wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&model=nova-2';
+            output.innerHTML += '<h3>Test 1: Subprotocol method</h3>';
+            
+            try {
+                const ws1 = new WebSocket(wsUrl1, ['token', apiKey]);
+                
+                ws1.onopen = function() {
+                    output.innerHTML += '<p style="color: green;">✅ Test 1: Connected!</p>';
+                    ws1.close();
+                };
+                
+                ws1.onerror = function(error) {
+                    output.innerHTML += '<p style="color: red;">❌ Test 1 Error</p>';
+                };
+                
+                ws1.onclose = function(event) {
+                    output.innerHTML += `<p>Test 1 Closed: Code ${event.code}, Reason: ${event.reason || 'none'}</p>`;
+                };
+            } catch (error) {
+                output.innerHTML += '<p style="color: red;">❌ Test 1 Exception: ' + error.message + '</p>';
+            }
+            
+            // Test 2: Using Authorization header in URL (older method)
+            setTimeout(() => {
+                const wsUrl2 = `wss://api.deepgram.com/v1/listen?encoding=linear16&sample_rate=16000&model=nova-2&token=${apiKey}`;
+                output.innerHTML += '<h3>Test 2: Token in URL</h3>';
+                
+                try {
+                    const ws2 = new WebSocket(wsUrl2);
+                    
+                    ws2.onopen = function() {
+                        output.innerHTML += '<p style="color: green;">✅ Test 2: Connected!</p>';
+                        ws2.close();
+                    };
+                    
+                    ws2.onerror = function(error) {
+                        output.innerHTML += '<p style="color: red;">❌ Test 2 Error</p>';
+                    };
+                    
+                    ws2.onclose = function(event) {
+                        output.innerHTML += `<p>Test 2 Closed: Code ${event.code}, Reason: ${event.reason || 'none'}</p>`;
+                    };
+                } catch (error) {
+                    output.innerHTML += '<p style="color: red;">❌ Test 2 Exception: ' + error.message + '</p>';
+                }
+            }, 1000);
+            
+            // Test 3: Using different encoding
+            setTimeout(() => {
+                const wsUrl3 = 'wss://api.deepgram.com/v1/listen?encoding=webm-opus&sample_rate=16000&model=nova-2';
+                output.innerHTML += '<h3>Test 3: WebM-Opus encoding with subprotocol</h3>';
+                
+                try {
+                    const ws3 = new WebSocket(wsUrl3, ['token', apiKey]);
+                    
+                    ws3.onopen = function() {
+                        output.innerHTML += '<p style="color: green;">✅ Test 3: Connected!</p>';
+                        ws3.close();
+                    };
+                    
+                    ws3.onerror = function(error) {
+                        output.innerHTML += '<p style="color: red;">❌ Test 3 Error</p>';
+                    };
+                    
+                    ws3.onclose = function(event) {
+                        output.innerHTML += `<p>Test 3 Closed: Code ${event.code}, Reason: ${event.reason || 'none'}</p>`;
+                    };
+                } catch (error) {
+                    output.innerHTML += '<p style="color: red;">❌ Test 3 Exception: ' + error.message + '</p>';
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
