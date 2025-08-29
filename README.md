@@ -1,3 +1,10 @@
+⚠️ **Work in Progress (Pre-Alpha)**
+
+This extension is under active development. It’s not production-ready and APIs/UI may change without notice.
+If you’re exploring the code, great! If you’re expecting a stable tool, please wait for v1.0.
+
+---
+
 # Synapse: Your Knowledge, Captured.
 
 <div align="center">
